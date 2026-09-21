@@ -33,6 +33,7 @@ async function requestJson(path, options) {
       const error = new Error(detail || `Error HTTP ${response.status}: no se pudo procesar la solicitud`);
       error.status = response.status;
       error.detail = detail;
+      error.message = detail || error.message;
       throw error;
     }
 
