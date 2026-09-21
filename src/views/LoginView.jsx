@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, LogIn } from 'lucide-react';
 import { View } from '../types';
 
-const PRIMARY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const PRIMARY_API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 const FALLBACK_API_URL = PRIMARY_API_URL.includes('localhost')
   ? PRIMARY_API_URL.replace('localhost', '127.0.0.1')
   : PRIMARY_API_URL.replace('127.0.0.1', 'localhost');

@@ -25,7 +25,7 @@ import UserDrawer from './components/UserDrawer';
 import { motion, AnimatePresence } from 'motion/react';
 import { getExistingAnalysisReport } from './services/linkService';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 const SESSION_STORAGE_KEY = 'riqssi.rememberedSession';
 
 function readRememberedSession() {
