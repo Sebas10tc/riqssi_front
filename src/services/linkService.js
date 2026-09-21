@@ -30,7 +30,10 @@ async function requestJson(path, options) {
 
     if (!response.ok) {
       const detail = data && typeof data === 'object' ? data.detail : null;
-      const error = new Error(detail || `Error HTTP ${response.status}: no se pudo procesar la solicitud`);
+      const fallbackDetail = response.status === 404
+        ? 'El video ya no está disponible en el almacenamiento. Vuelve a descargarlo desde su enlace original.'
+        : `Error HTTP ${response.status}: no se pudo procesar la solicitud`;
+      const error = new Error(detail || fallbackDetail);
       error.status = response.status;
       error.detail = detail;
       error.message = detail || error.message;
