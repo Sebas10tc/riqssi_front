@@ -118,10 +118,7 @@ export async function downloadLinkForAnalysis({ url, nombreuser }) {
 
   const videoHash = downloadData.video?.hash_video;
   if (!videoHash) {
-    return {
-      stage: 'downloaded',
-      download: downloadData,
-    };
+    throw new Error('El backend no devolvió un video válido para continuar el análisis.');
   }
 
   return {
