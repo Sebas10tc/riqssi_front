@@ -1,5 +1,6 @@
 import { Users, Building2, BarChart3, Search, Filter, Download, LogIn, Pencil, Trash2, X, RefreshCw, Server, Database, BrainCircuit, HardDrive, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import VerificationsModal from '../components/VerificationsModal';
 
 const PRIMARY_API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const FALLBACK_API_URL = PRIMARY_API_URL.includes('localhost')
@@ -104,6 +105,7 @@ export default function UserManagementView({ user }) {
   const [showAllLogs, setShowAllLogs] = useState(false);
   const [allActivity, setAllActivity] = useState(null);
   const [loadingAllLogs, setLoadingAllLogs] = useState(false);
+  const [verificationsUser, setVerificationsUser] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -414,13 +416,14 @@ export default function UserManagementView({ user }) {
                 <th className="px-6 py-4">Rol</th>
                 <th className="px-6 py-4">Membresía</th>
                 <th className="px-6 py-4">Vencimiento</th>
+                <th className="px-6 py-4">Cantidad de Verificaciones</th>
                 <th className="px-6 py-4">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
               {loadingData && adminData.users.length === 0 ? (
                 <tr>
-                  <td className="px-6 py-10 text-center text-slate-500" colSpan={6}>
+                  <td className="px-6 py-10 text-center text-slate-500" colSpan={7}>
                     Cargando usuarios...
                   </td>
                 </tr>
@@ -457,6 +460,16 @@ export default function UserManagementView({ user }) {
                         </span>
                       </td>
                       <td className="px-6 py-4">
+                        <button
+                          className="min-w-10 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-700 hover:bg-blue-100 transition-colors"
+                          onClick={() => setVerificationsUser({ name: fullName, verifications: user.verifications })}
+                          title="Ver proporción Fake / Verdadero"
+                          type="button"
+                        >
+                          {Number(user.verifications?.total || 0)}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-2">
                           <button
                             className="inline-flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-[11px] font-semibold text-blue-700 hover:bg-blue-100 transition-colors disabled:opacity-60"
@@ -489,7 +502,7 @@ export default function UserManagementView({ user }) {
                 })
               ) : (
                 <tr>
-                  <td className="px-6 py-10 text-center text-slate-500" colSpan={6}>
+                  <td className="px-6 py-10 text-center text-slate-500" colSpan={7}>
                     No hay usuarios para mostrar.
                   </td>
                 </tr>
@@ -608,6 +621,14 @@ export default function UserManagementView({ user }) {
             </div>
           </div>
         </div>
+      ) : null}
+
+      {verificationsUser ? (
+        <VerificationsModal
+          userName={verificationsUser.name}
+          verifications={verificationsUser.verifications}
+          onClose={() => setVerificationsUser(null)}
+        />
       ) : null}
     </div>
   );

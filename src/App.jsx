@@ -22,6 +22,7 @@ import RegisterView from './views/RegisterView';
 import RecoverPasswordView from './views/RecoverPasswordView';
 import InstructionsSentView from './views/InstructionsSentView';
 import UserDrawer from './components/UserDrawer';
+import AccountDeletedModal from './components/AccountDeletedModal';
 import { motion, AnimatePresence } from 'motion/react';
 import { getExistingAnalysisReport } from './services/linkService';
 
@@ -108,8 +109,8 @@ export default function App() {
   const [analysisStatus, setAnalysisStatus] = useState('idle');
   const [analysisError, setAnalysisError] = useState('');
   const [analysisThumbnailUrl, setAnalysisThumbnailUrl] = useState('');
-
-  const handleLogin = (loggedUser, rememberMe = false) => {
+  const [showAccountDeleted, setShowAccountDeleted] = useState(false);
+  const [renewPlan, setRenewPlan] = useState(null); = (loggedUser, rememberMe = false) => {
     setUser(loggedUser);
     setAnalysisRequest(null);
     setAnalysisResult(null);
@@ -134,7 +135,17 @@ export default function App() {
     sessionStorage.removeItem('riqssi.accessToken');
     setCurrentView(View.LOGIN);
   };
- 
+
+  const handleAccountDeleted = () => {
+    handleLogout();
+    setShowAccountDeleted(true);
+  };
+
+  const handleRenewMembership = (planId) => {
+    setRenewPlan(planId);
+    setCurrentView(View.PRICE);
+  };
+
 
   const handleStartAnalysis = (request) => {
     setAnalysisRequest(request);
@@ -219,11 +230,11 @@ export default function App() {
       case View.USER_MANAGEMENT:
         return <UserManagementView user={user} />;
       case View.PRICE:
-        return <PriceView setView={setCurrentView} user={user} />;
+        return <PriceView setView={setCurrentView} user={user} initialPlan={renewPlan} onInitialPlanUsed={() => setRenewPlan(null)} />;
       case View.RESOURCES:
         return <ResourcesView />;
       case View.PROFILE:
-        return <ProfileView onLogout={handleLogout} user={user} />;
+        return <ProfileView onLogout={handleLogout} onAccountDeleted={handleAccountDeleted} onRenew={handleRenewMembership} user={user} />;
       case View.REGISTER:
         return <RegisterView setView={setCurrentView} />;
       case View.RECOVER_PASSWORD:
@@ -282,6 +293,8 @@ return (
           />
         )}
       </AnimatePresence>
+
+      {showAccountDeleted ? <AccountDeletedModal onClose={() => setShowAccountDeleted(false)} /> : null}
     </div>
   );
 }

@@ -20,11 +20,12 @@ function formatMembershipName(value) {
   return value || 'Sin membresía';
 }
  
-export default function ProfileView({ onLogout, user }) {
+export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user }) {
   const [fullName] = useState(user?.name || 'Seba');
   const [email] = useState(user?.email || 'seba@riqssi.forensic');
   const [roleName] = useState(String(user?.role || 'USER').toUpperCase());
-  const [membershipName, setMembershipName] = useState(formatMembershipName(user?.membership?.nombre || 'Sin membresía'));
+  const isAdmin = roleName === 'ADMIN';
+  const [membershipName, setMembershipName] = useState(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre || 'Sin membresía'));
   const [paymentStatus, setPaymentStatus] = useState(user?.payment_status || 'approved');
   const [membershipExpiration, setMembershipExpiration] = useState(user?.membership_expiration || null);
   const [password, setPassword] = useState('');
@@ -46,13 +47,13 @@ export default function ProfileView({ onLogout, user }) {
       try {
         const data = await getUserProfile(username);
         if (!cancelled) {
-          setMembershipName(formatMembershipName(data?.membership?.nombre || 'Sin membresía'));
+          setMembershipName(isAdmin ? 'Premium' : formatMembershipName(data?.membership?.nombre || 'Sin membresía'));
           setPaymentStatus(data?.payment_status || 'approved');
-          setMembershipExpiration(data?.membership_expiration || null);
+          setMembershipExpiration(isAdmin ? null : data?.membership_expiration || null);
         }
       } catch {
         if (!cancelled) {
-          setMembershipName(formatMembershipName(user?.membership?.nombre || 'Sin membresía'));
+          setMembershipName(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre || 'Sin membresía'));
         }
       }
     };
@@ -62,7 +63,7 @@ export default function ProfileView({ onLogout, user }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.membership?.nombre, user?.nombreuser, user?.username]);
+  }, [isAdmin, user?.membership?.nombre, user?.nombreuser, user?.username]);
 
   const avatarText = (user?.username || user?.name || user?.email || 'RI')
     .trim()
@@ -106,6 +107,11 @@ export default function ProfileView({ onLogout, user }) {
     }
   };
 
+  const handleRenewMembership = () => {
+    const paidPlan = { 'Básico': 'basico', 'Premium': 'premium' }[membershipName] || null;
+    onRenew?.(paidPlan);
+  };
+
   const handleDeleteAccount = async () => {
     setError('');
 
@@ -126,7 +132,7 @@ export default function ProfileView({ onLogout, user }) {
     try {
       setIsDeleting(true);
       await deleteAccount(username);
-      onLogout();
+      (onAccountDeleted || onLogout)();
     } catch (err) {
       setError(err.message || 'No se pudo eliminar la cuenta');
     } finally {
@@ -251,19 +257,30 @@ export default function ProfileView({ onLogout, user }) {
               <span className="block text-xs font-bold uppercase tracking-widest text-slate-400">Estado del pago</span>
               <span className="mt-1 block font-semibold text-slate-700">{paymentStatus === 'canceled' ? 'Cancelada · plan Gratis' : paymentStatus === 'expired' ? 'Expirada · plan Gratis' : paymentStatus === 'denied' ? 'Solicitud denegada · plan Gratis' : paymentStatus === 'pending' ? 'Pendiente de aprobación · plan Gratis' : 'Aprobada'}</span>
             </div>
-            {['Básico', 'Premium'].includes(membershipName) ? (
+            {!isAdmin && ['Básico', 'Premium'].includes(membershipName) ? (
               <button type="button" onClick={handleCancelMembership} disabled={isCancelling} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">
                 {isCancelling ? 'Cancelando...' : 'Cancelar membresía'}
               </button>
             ) : null}
           </div>
 
-          {membershipExpiration ? (
-            <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50/80 px-6 py-4 text-sm text-slate-700">
-              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400">Vencimiento</span>
-              <span className="mt-1 block font-semibold">{new Date(membershipExpiration).toLocaleDateString()}</span>
+          <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/80 px-6 py-4 text-sm text-slate-700">
+            <div>
+              <span className="block text-xs font-bold uppercase tracking-widest text-slate-400">Fecha de vencimiento</span>
+              <span className="mt-1 block font-semibold">
+                {isAdmin
+                  ? 'Sin vencimiento (Premium permanente)'
+                  : membershipExpiration
+                    ? new Date(membershipExpiration).toLocaleDateString()
+                    : 'Sin membresía activa'}
+              </span>
             </div>
-          ) : null}
+            {!isAdmin ? (
+              <button type="button" onClick={handleRenewMembership} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+                Renovar Membresía
+              </button>
+            ) : null}
+          </div>
 
           <div className="bg-slate-50/80 border border-slate-100 rounded-xl p-5 flex flex-col py-4 px-6 sm:flex-row sm:items-center justify-between gap-4 text-sm mt-4">
             <div className="flex items-center justify-between sm:justify-start gap-4 w-full">

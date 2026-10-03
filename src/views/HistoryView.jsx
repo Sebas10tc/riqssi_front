@@ -219,6 +219,60 @@ export default function HistoryView({ setView, user, onOpenReport }) {
     setCurrentPage(1);
   }, [searchTerm, verdictFilter, dateFilter]);
 
+  const hasHistory = reports.length > 0;
+
+  const handleExportCsv = () => {
+    if (!hasHistory) return;
+
+    const escapeCell = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
+    const headers = ['Archivo', 'Hash', 'Fecha', 'Hora', 'Veredicto', 'Probabilidad de fake (%)'];
+    const rows = reports.map((report) => {
+      const score = report.resultado_total?.veredicto_final;
+      return [
+        report.filename,
+        report.videoHash,
+        report.date,
+        report.time,
+        getVerdictDisplayLabel(report.resultado_total?.etiqueta_final || report.status),
+        score != null ? Math.round(Number(score) * 100) : '',
+      ];
+    });
+    const csv = [headers, ...rows].map((row) => row.map(escapeCell).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `historial-${user?.nombreuser || 'riqssi'}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDeleteHistory = async () => {
+    if (!hasHistory || !user?.nombreuser) return;
+    if (!window.confirm('¿Eliminar todo tu historial? Esta acción no se puede deshacer.')) return;
+
+    setError('');
+    setLoading(true);
+    try {
+      const token = sessionStorage.getItem('riqssi.accessToken');
+      const response = await fetch(`${API_URL}/historial/${encodeURIComponent(user.nombreuser)}`, {
+        method: 'DELETE',
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.detail || `Error HTTP ${response.status}: no se pudo eliminar el historial`);
+      }
+      setReports([]);
+      setCurrentPage(1);
+    } catch (err) {
+      setError(err.message || 'No se pudo eliminar el historial');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disabledActionClass = 'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent';
+
   return (
     <div className="container mx-auto px-8 py-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
@@ -282,7 +336,25 @@ export default function HistoryView({ setView, user, onOpenReport }) {
         <span className="rounded-full border border-slate-200 bg-white px-3 py-1">Fecha: {dateFilter === 'ALL' ? 'Todas' : dateFilter === 'TODAY' ? 'Hoy' : dateFilter === 'LAST_7_DAYS' ? 'Últimos 7 días' : 'Últimos 30 días'}</span>
       </section>
 
-      
+      <section className="mb-6 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          disabled={!hasHistory || loading}
+          className={`flex items-center gap-2 rounded-md border border-slate-200 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-slate-700 hover:bg-slate-50 ${disabledActionClass}`}
+        >
+          <Download className="w-4 h-4" />
+          Exportar Historial (CSV)
+        </button>
+        <button
+          type="button"
+          onClick={handleDeleteHistory}
+          disabled={!hasHistory || loading}
+          className={`flex items-center gap-2 rounded-md border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold uppercase tracking-wide text-red-700 hover:bg-red-100 ${disabledActionClass}`}
+        >
+          Eliminar Historial
+        </button>
+      </section>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
         {loading ? (

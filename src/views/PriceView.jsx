@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const PLANS = [
   {
@@ -136,17 +136,26 @@ function PlanCard({ plan, onSelect, isProcessing }) {
   );
 }
 
-export default function RiqssiPricing({ user }) {
+export default function RiqssiPricing({ user, initialPlan = null, onInitialPlanUsed }) {
   const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
   const [processingId, setProcessingId] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
   const [operationCode, setOperationCode] = useState('');
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
 
+  useEffect(() => {
+    onInitialPlanUsed?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const handleSelect = (planId) => {
     if (!user?.nombreuser) {
       setMessage('Inicia sesión para seleccionar una membresía.');
+      return;
+    }
+    if (String(user.role || '').toLowerCase() === 'admin') {
+      setMessage('Los administradores tienen Premium permanente.');
       return;
     }
     if (planId === 'gratis') return;
@@ -156,30 +165,40 @@ export default function RiqssiPricing({ user }) {
 
   const submitPayment = async (event) => {
     event.preventDefault();
-    if (!proof || !operationCode.trim()) {
-      setMessage('Adjunta el comprobante y el código de operación.');
+    if (!operationCode.trim() || !proof) {
+      setMessage('El código de operación y la imagen del comprobante son obligatorios.');
       return;
     }
     setProcessingId(selectedPlan);
-    const selection = await fetch(`${API_URL}/membership/select`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nombreuser: user.nombreuser, plan: selectedPlan }),
-    });
-    if (!selection.ok) {
-      const selectionData = await selection.json().catch(() => null);
-      setMessage(selectionData?.detail || 'No se pudo seleccionar el plan.');
+    try {
+      const selection = await fetch(`${API_URL}/membership/select`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombreuser: user.nombreuser, plan: selectedPlan }),
+      });
+      if (!selection.ok) {
+        const selectionData = await selection.json().catch(() => null);
+        setMessage(selectionData?.detail || 'No se pudo seleccionar el plan.');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('nombreuser', user.nombreuser);
+      formData.append('operation_code', operationCode.trim());
+      formData.append('proof', proof);
+      const response = await fetch(`${API_URL}/membership/payment`, { method: 'POST', body: formData });
+      const data = await response.json().catch(() => null);
+      if (!response.ok) {
+        setMessage(data?.detail || 'No se pudo enviar el comprobante.');
+        return;
+      }
+      setMessage('Comprobante enviado. Está pendiente de aprobación.');
+      setSelectedPlan(null);
+      setOperationCode('');
+      setProof(null);
+    } catch {
+      setMessage('No se pudo conectar con el servidor. Inténtalo nuevamente.');
+    } finally {
       setProcessingId(null);
-      return;
     }
-    const formData = new FormData();
-    formData.append('nombreuser', user.nombreuser);
-    formData.append('operation_code', operationCode);
-    formData.append('proof', proof);
-    const response = await fetch(`${API_URL}/membership/payment`, { method: 'POST', body: formData });
-    const data = await response.json();
-    setMessage(response.ok ? 'Comprobante enviado. Está pendiente de aprobación.' : (data.detail || 'No se pudo enviar el comprobante.'));
-    setProcessingId(null);
-    if (response.ok) setSelectedPlan(null);
   };
 
   return (
@@ -218,6 +237,7 @@ export default function RiqssiPricing({ user }) {
             <img src={import.meta.env.VITE_YAPE_QR_URL || '/storage/yape/qr.png'} alt="QR de Yape" className="mx-auto my-5 h-52 w-52 object-contain" />
             <input className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Código de operación" value={operationCode} onChange={(event) => setOperationCode(event.target.value)} />
             <input className="mb-5 w-full rounded-lg border border-slate-200 p-3 text-sm" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(event) => setProof(event.target.files?.[0] || null)} />
+            {message ? <p className="mb-4 text-sm font-semibold text-red-600">{message}</p> : null}
             <div className="flex gap-3"><button type="button" className="w-full rounded-lg border border-slate-200 py-3" onClick={() => setSelectedPlan(null)}>Cancelar</button><button type="submit" className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white">Enviar comprobante</button></div>
           </form>
         </div>

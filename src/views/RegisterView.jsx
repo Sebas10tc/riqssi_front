@@ -85,7 +85,7 @@ export default function RegisterView({ setView }) {
     event.preventDefault();
     setPaymentMessage('');
     if (!proof || !operationCode.trim()) {
-      setPaymentMessage('Adjunta el comprobante y escribe el código de operación.');
+      setPaymentMessage('El código de operación y la imagen del comprobante son obligatorios.');
       return;
     }
     const formData = new FormData();
