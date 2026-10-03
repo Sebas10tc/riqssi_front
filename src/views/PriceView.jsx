@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const PLANS = [
   {
@@ -136,18 +136,13 @@ function PlanCard({ plan, onSelect, isProcessing }) {
   );
 }
 
-export default function RiqssiPricing({ user, initialPlan = null, onInitialPlanUsed }) {
+export default function RiqssiPricing({ user }) {
   const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
   const [processingId, setProcessingId] = useState(null);
-  const [selectedPlan, setSelectedPlan] = useState(initialPlan);
+  const [selectedPlan, setSelectedPlan] = useState(null);
   const [operationCode, setOperationCode] = useState('');
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
-
-  useEffect(() => {
-    onInitialPlanUsed?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const handleSelect = (planId) => {
     if (!user?.nombreuser) {

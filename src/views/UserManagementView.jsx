@@ -87,12 +87,13 @@ function getMembershipClass(name) {
 }
 
 export default function UserManagementView({ user }) {
-  const [summary, setSummary] = useState({ totalUsers: 0, premiumPlans: 0, analysesDone: 0, activity_total: 0 });
+  const [summary, setSummary] = useState({ totalUsers: 0, premiumPlans: 0, analysesDone: 0, activity_total: 0, verifications: null });
   const [adminData, setAdminData] = useState({ users: [], memberships: [], recentActivity: [] });
   const [loadingData, setLoadingData] = useState(true);
   const [error, setError] = useState('');
   const [editingUser, setEditingUser] = useState(null);
   const [selectedMembershipId, setSelectedMembershipId] = useState('');
+  const [selectedRole, setSelectedRole] = useState('user');
   const [savingMembership, setSavingMembership] = useState('');
   const [deletingUser, setDeletingUser] = useState('');
   const [reviewingPayment, setReviewingPayment] = useState('');
@@ -126,6 +127,7 @@ export default function UserManagementView({ user }) {
             premiumPlans: Number(data?.premium_plans || 0),
             analysesDone: Number(data?.analyses_done || 0),
             activity_total: Number(data?.activity_total || 0),
+            verifications: data?.verifications || null,
           });
           setAdminData({
             users: Array.isArray(data?.users) ? data.users : [],
@@ -165,6 +167,7 @@ export default function UserManagementView({ user }) {
         premiumPlans: Number(data?.premium_plans || 0),
         analysesDone: Number(data?.analyses_done || 0),
         activity_total: Number(data?.activity_total || 0),
+        verifications: data?.verifications || null,
       });
       setAdminData({
         users: Array.isArray(data?.users) ? data.users : [],
@@ -183,6 +186,7 @@ export default function UserManagementView({ user }) {
     setError('');
     setEditingUser(user);
     setSelectedMembershipId(String(user?.membership?.idmembresia || ''));
+    setSelectedRole(String(user?.role || 'user').toLowerCase());
   };
 
   const handleDeleteUser = async (user) => {
@@ -209,7 +213,16 @@ export default function UserManagementView({ user }) {
   };
 
   const handleSaveMembership = async () => {
-    if (!editingUser?.nombreuser || !selectedMembershipId) {
+    if (!editingUser?.nombreuser) {
+      return;
+    }
+
+    const currentRole = String(editingUser.role || 'user').toLowerCase();
+    const roleChanged = selectedRole !== currentRole;
+    const membershipChanged = selectedMembershipId !== String(editingUser.membership?.idmembresia || '');
+    const targetIsAdmin = selectedRole === 'admin';
+
+    if (!targetIsAdmin && membershipChanged && !selectedMembershipId) {
       setError('Selecciona una membresía válida.');
       return;
     }
@@ -218,18 +231,27 @@ export default function UserManagementView({ user }) {
     setError('');
 
     try {
-      await requestJson(`/admin/users/${encodeURIComponent(editingUser.nombreuser)}/membership`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ membresia_id: Number(selectedMembershipId) }),
-      });
+      const username = encodeURIComponent(editingUser.nombreuser);
+      if (roleChanged) {
+        await requestJson(`/admin/users/${username}/role`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role: selectedRole }),
+        });
+      }
+      // Los administradores son Premium permanente; su membresía no se edita.
+      if (membershipChanged && !targetIsAdmin) {
+        await requestJson(`/admin/users/${username}/membership`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ membresia_id: Number(selectedMembershipId) }),
+        });
+      }
       setEditingUser(null);
       setSelectedMembershipId('');
       await handleReloadData();
     } catch (saveError) {
-      setError(saveError?.message || 'No se pudo actualizar la membresía.');
+      setError(saveError?.message || 'No se pudo actualizar el usuario.');
     } finally {
       setSavingMembership('');
     }
@@ -333,7 +355,7 @@ export default function UserManagementView({ user }) {
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <MetricCard title="Total Usuarios" value={loadingData ? '—' : summary.totalUsers.toLocaleString()} icon={<Users className="w-5 h-5" />} />
         <MetricCard title="Planes Premium" value={loadingData ? '—' : summary.premiumPlans.toLocaleString()} icon={<Building2 className="w-5 h-5" />} />
-        <MetricCard title="Análisis Realizados" value={loadingData ? '—' : summary.analysesDone.toLocaleString()} icon={<BarChart3 className="w-5 h-5" />} />
+        <MetricCard title="Análisis Realizados" value={loadingData ? '—' : summary.analysesDone.toLocaleString()} icon={<BarChart3 className="w-5 h-5" />} onClick={() => setVerificationsUser({ name: 'Todos los usuarios', verifications: summary.verifications })} />
       </section>
 
       <section className="bg-white rounded border border-slate-200 shadow-sm mb-8 p-6">
@@ -567,9 +589,9 @@ export default function UserManagementView({ user }) {
           <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Editar membresía</h3>
+                <h3 className="text-xl font-bold text-slate-900">Editar usuario</h3>
                 <p className="text-sm text-slate-500 mt-1">
-                  {editingUser.nombre || editingUser.nombreuser} · solo se actualiza la membresía.
+                  {editingUser.nombre || editingUser.nombreuser} · membresía y rol.
                 </p>
               </div>
               <button
@@ -581,12 +603,26 @@ export default function UserManagementView({ user }) {
               </button>
             </div>
 
+            <label className="block text-sm font-semibold text-slate-700 mb-2" htmlFor="roleSelect">
+              Rol
+            </label>
+            <select
+              id="roleSelect"
+              className="mb-4 w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600"
+              value={selectedRole}
+              onChange={(event) => setSelectedRole(event.target.value)}
+            >
+              <option value="user">Usuario</option>
+              <option value="admin">Administrador</option>
+            </select>
+
             <label className="block text-sm font-semibold text-slate-700 mb-2" htmlFor="membershipSelect">
               Membresía
             </label>
             <select
               id="membershipSelect"
-              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600"
+              disabled={selectedRole === 'admin'}
+              className="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-600 disabled:opacity-60"
               value={selectedMembershipId}
               onChange={(event) => setSelectedMembershipId(event.target.value)}
             >
@@ -612,7 +648,7 @@ export default function UserManagementView({ user }) {
               </button>
               <button
                 className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-blue-400"
-                disabled={savingMembership === editingUser.nombreuser || !selectedMembershipId}
+                disabled={savingMembership === editingUser.nombreuser || (selectedRole !== 'admin' && !selectedMembershipId)}
                 onClick={handleSaveMembership}
                 type="button"
               >
@@ -634,9 +670,13 @@ export default function UserManagementView({ user }) {
   );
 }
 
-function MetricCard({ title, value, icon }) {
+function MetricCard({ title, value, icon, onClick }) {
+  const Wrapper = onClick ? 'button' : 'div';
   return (
-    <div className="bg-white p-6 rounded border border-slate-200 shadow-sm flex flex-col justify-between h-40">
+    <Wrapper
+      {...(onClick ? { onClick, type: 'button', title: 'Ver % Verdadero vs Fake' } : {})}
+      className={`bg-white p-6 rounded border border-slate-200 shadow-sm flex flex-col justify-between h-40 text-left ${onClick ? 'cursor-pointer hover:border-blue-300 hover:shadow-md transition' : ''}`}
+    >
       <div className="flex justify-between items-start">
         <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{title}</span>
         <div className="text-blue-600">{icon}</div>
@@ -644,7 +684,7 @@ function MetricCard({ title, value, icon }) {
       <div className="mt-4">
         <span className="text-4xl font-bold text-slate-900">{value}</span>
       </div>
-    </div>
+    </Wrapper>
   );
 }
 

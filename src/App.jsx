@@ -110,7 +110,6 @@ export default function App() {
   const [analysisError, setAnalysisError] = useState('');
   const [analysisThumbnailUrl, setAnalysisThumbnailUrl] = useState('');
   const [showAccountDeleted, setShowAccountDeleted] = useState(false);
-  const [renewPlan, setRenewPlan] = useState(null);
   const handleLogin = (loggedUser, rememberMe = false) => {
     setUser(loggedUser);
     setAnalysisRequest(null);
@@ -140,11 +139,6 @@ export default function App() {
   const handleAccountDeleted = () => {
     handleLogout();
     setShowAccountDeleted(true);
-  };
-
-  const handleRenewMembership = (planId) => {
-    setRenewPlan(planId);
-    setCurrentView(View.PRICE);
   };
 
 
@@ -231,11 +225,11 @@ export default function App() {
       case View.USER_MANAGEMENT:
         return <UserManagementView user={user} />;
       case View.PRICE:
-        return <PriceView setView={setCurrentView} user={user} initialPlan={renewPlan} onInitialPlanUsed={() => setRenewPlan(null)} />;
+        return <PriceView setView={setCurrentView} user={user} />;
       case View.RESOURCES:
         return <ResourcesView />;
       case View.PROFILE:
-        return <ProfileView onLogout={handleLogout} onAccountDeleted={handleAccountDeleted} onRenew={handleRenewMembership} user={user} />;
+        return <ProfileView onLogout={handleLogout} onAccountDeleted={handleAccountDeleted} user={user} />;
       case View.REGISTER:
         return <RegisterView setView={setCurrentView} />;
       case View.RECOVER_PASSWORD:

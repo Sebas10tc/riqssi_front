@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, Check, Edit2, ShieldCheck, LogOut, Trash2 } from 'lucide-react';
 import { cancelMembership, changePassword, deleteAccount, getUserProfile } from '../services/authService';
+import RenewMembershipModal from '../components/RenewMembershipModal';
 
 function formatMembershipName(value) {
   const normalized = String(value || '').trim().toLowerCase();
@@ -17,15 +18,15 @@ function formatMembershipName(value) {
     return 'Gratis';
   }
 
-  return value || 'Sin membresía';
+  return 'Gratis';
 }
  
-export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user }) {
+export default function ProfileView({ onLogout, onAccountDeleted, user }) {
   const [fullName] = useState(user?.name || 'Seba');
   const [email] = useState(user?.email || 'seba@riqssi.forensic');
   const [roleName] = useState(String(user?.role || 'USER').toUpperCase());
   const isAdmin = roleName === 'ADMIN';
-  const [membershipName, setMembershipName] = useState(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre || 'Sin membresía'));
+  const [membershipName, setMembershipName] = useState(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre));
   const [paymentStatus, setPaymentStatus] = useState(user?.payment_status || 'approved');
   const [membershipExpiration, setMembershipExpiration] = useState(user?.membership_expiration || null);
   const [password, setPassword] = useState('');
@@ -34,6 +35,7 @@ export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user 
   const [error, setError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
+  const [showRenewModal, setShowRenewModal] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -47,13 +49,13 @@ export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user 
       try {
         const data = await getUserProfile(username);
         if (!cancelled) {
-          setMembershipName(isAdmin ? 'Premium' : formatMembershipName(data?.membership?.nombre || 'Sin membresía'));
+          setMembershipName(isAdmin ? 'Premium' : formatMembershipName(data?.membership?.nombre));
           setPaymentStatus(data?.payment_status || 'approved');
           setMembershipExpiration(isAdmin ? null : data?.membership_expiration || null);
         }
       } catch {
         if (!cancelled) {
-          setMembershipName(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre || 'Sin membresía'));
+          setMembershipName(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre));
         }
       }
     };
@@ -107,10 +109,7 @@ export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user 
     }
   };
 
-  const handleRenewMembership = () => {
-    const paidPlan = { 'Básico': 'basico', 'Premium': 'premium' }[membershipName] || null;
-    onRenew?.(paidPlan);
-  };
+  const renewalPlan = { 'Básico': 'basico', 'Premium': 'premium' }[membershipName] || 'basico';
 
   const handleDeleteAccount = async () => {
     setError('');
@@ -272,11 +271,11 @@ export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user 
                   ? 'Sin vencimiento (Premium permanente)'
                   : membershipExpiration
                     ? new Date(membershipExpiration).toLocaleDateString()
-                    : 'Sin membresía activa'}
+                    : 'Sin vencimiento'}
               </span>
             </div>
             {!isAdmin ? (
-              <button type="button" onClick={handleRenewMembership} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+              <button type="button" onClick={() => setShowRenewModal(true)} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                 Renovar Membresía
               </button>
             ) : null}
@@ -334,6 +333,14 @@ export default function ProfileView({ onLogout, onAccountDeleted, onRenew, user 
           Sistema RIQSSI Protegido
         </div>
       </div>
+
+      {showRenewModal ? (
+        <RenewMembershipModal
+          nombreuser={user?.nombreuser || user?.username}
+          defaultPlan={renewalPlan}
+          onClose={() => setShowRenewModal(false)}
+        />
+      ) : null}
     </div>
   );
 }
