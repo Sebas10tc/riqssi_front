@@ -110,7 +110,8 @@ export default function App() {
   const [analysisError, setAnalysisError] = useState('');
   const [analysisThumbnailUrl, setAnalysisThumbnailUrl] = useState('');
   const [showAccountDeleted, setShowAccountDeleted] = useState(false);
-  const [renewPlan, setRenewPlan] = useState(null); = (loggedUser, rememberMe = false) => {
+  const [renewPlan, setRenewPlan] = useState(null);
+  const handleLogin = (loggedUser, rememberMe = false) => {
     setUser(loggedUser);
     setAnalysisRequest(null);
     setAnalysisResult(null);
