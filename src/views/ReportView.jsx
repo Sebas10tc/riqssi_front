@@ -140,15 +140,6 @@ export default function ReportView({ analysisResult, user }) {
     });
   };
 
-  const addWrappedText = (pdf, text, x, y, maxWidth, lineHeight = 6, fontSize = 10, fontStyle = 'normal', color = [51, 65, 85]) => {
-    pdf.setFontSize(fontSize);
-    pdf.setFont('helvetica', fontStyle);
-    pdf.setTextColor(...color);
-    const lines = pdf.splitTextToSize(String(text || ''), maxWidth);
-    pdf.text(lines, x, y);
-    return y + lines.length * lineHeight;
-  };
-
   const sanitizePdfText = (value) => {
     return String(value || '')
       .normalize('NFKD')
@@ -166,18 +157,6 @@ export default function ReportView({ analysisResult, user }) {
     pdf.setFont('helvetica', 'bold');
     pdf.text(title, x + 3, y + 6.1);
     return y + 13;
-  };
-
-  const drawKeyValue = (pdf, label, value, x, y, labelWidth, valueWidth) => {
-    pdf.setFontSize(9);
-    pdf.setFont('helvetica', 'bold');
-    pdf.setTextColor(100, 116, 139);
-    pdf.text(label, x, y);
-    pdf.setFont('helvetica', 'normal');
-    pdf.setTextColor(15, 23, 42);
-    const wrapped = pdf.splitTextToSize(String(value), valueWidth);
-    pdf.text(wrapped, x + labelWidth, y);
-    return y + Math.max(6, wrapped.length * 4.2);
   };
 
   const addPageFooter = (pdf, pageNumber, totalPages) => {
@@ -202,125 +181,191 @@ export default function ReportView({ analysisResult, user }) {
       const margin = 14;
       const contentWidth = pageWidth - margin * 2;
 
-      pdf.setFillColor(248, 250, 252);
-      pdf.rect(0, 0, pageWidth, pageHeight, 'F');
+      const verdictColor = isFake ? [220, 38, 38] : [5, 150, 90];
+      let y = 0;
 
+      const ensureSpace = (needed) => {
+        if (y + needed > pageHeight - 20) {
+          pdf.addPage();
+          y = 18;
+        }
+      };
+
+      const drawCard = (height) => {
+        pdf.setFillColor(255, 255, 255);
+        pdf.setDrawColor(226, 232, 240);
+        pdf.roundedRect(margin, y, contentWidth, height, 3, 3, 'FD');
+      };
+
+      const drawParagraph = (text, fontSize = 10, color = [51, 65, 85]) => {
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(fontSize);
+        const lines = pdf.splitTextToSize(sanitizePdfText(text), contentWidth - 10);
+        const height = lines.length * fontSize * 0.42 + 9;
+        ensureSpace(height);
+        drawCard(height);
+        pdf.setTextColor(...color);
+        pdf.text(lines, margin + 5, y + 7);
+        y += height + 6;
+      };
+
+      const startSection = (title, minHeight) => {
+        ensureSpace(13 + minHeight);
+        y = drawSectionHeader(pdf, title, margin, y, contentWidth);
+      };
+
+      // Encabezado
+      pdf.setFillColor(37, 99, 235);
+      pdf.rect(0, 0, pageWidth, 30, 'F');
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(18);
-      pdf.setTextColor(37, 99, 235);
-      pdf.text('Reporte de Veracidad Técnica', margin, 20);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text('Reporte de Veracidad Técnica', margin, 14);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(219, 234, 254);
+      pdf.text(`RIQSSI  |  Generado el ${new Date().toLocaleString('es-PE')}`, margin, 22);
+      y = 38;
 
+      // Tarjeta de video y veredicto
       const pdfVideoName = sanitizePdfText(formatValue(videoMeta?.nombrevideo || videoMeta?.hash_video, 'SIN NOMBRE'));
       const pdfVideoId = sanitizePdfText(formatValue(videoMeta?.hash_video?.slice(0, 16)?.toUpperCase(), 'SIN-ID'));
+      const cardHeight = 38;
+      drawCard(cardHeight);
 
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(71, 85, 105);
-      pdf.text('Video analizado', margin, 27);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(15, 23, 42);
-      addWrappedText(pdf, pdfVideoName, margin, 33, contentWidth - 70, 5, 10, 'bold', [15, 23, 42]);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(100, 116, 139);
-      pdf.text(`ID: ${pdfVideoId}`, margin, 39);
-
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect(pageWidth - 65, 12, 51, 18, 3, 3, 'FD');
-      pdf.setFontSize(8);
-      pdf.setTextColor(100, 116, 139);
-      pdf.text('Estado final', pageWidth - 59, 19);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(11);
-      pdf.setTextColor(isFake ? 220 : 5, isFake ? 38 : 150, isFake ? 38 : 90);
-      pdf.text(verdictText, pageWidth - 59, 26);
-
-      let y = 42;
-
-      const imageData = await getPdfImageData(thumbnailUrl || '');
-      pdf.setDrawColor(226, 232, 240);
-      pdf.setFillColor(255, 255, 255);
-      pdf.roundedRect(margin, y, contentWidth, 52, 3, 3, 'FD');
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(15, 23, 42);
-      pdf.setFontSize(12);
-      pdf.text('Resumen principal', margin + 4, y + 8);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      pdf.setTextColor(51, 65, 85);
-      const summaryText = finalVerdict
-        ? `El análisis combinado de audio y video concluye ${getVerdictDisplayLabel(finalVerdict.etiqueta)}. Veredicto final: ${finalVerdict.veredicto_final}.`
-        : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.';
-      y = addWrappedText(pdf, summaryText, margin + 4, y + 15, contentWidth - 8, 5.5, 10);
-
+      const imageData = await getPdfImageData(thumbnailUrl || '').catch(() => null);
+      let textX = margin + 5;
       if (imageData) {
-        pdf.addImage(imageData, 'JPEG', pageWidth - 52, y - 19, 38, 24, undefined, 'FAST');
+        const imageFormat = imageData.startsWith('data:image/png') ? 'PNG' : imageData.startsWith('data:image/webp') ? 'WEBP' : 'JPEG';
+        try {
+          pdf.addImage(imageData, imageFormat, margin + 4, y + 5, 48, 28, undefined, 'FAST');
+          textX = margin + 58;
+        } catch {
+          // Sin miniatura si el formato no es compatible.
+        }
       }
 
-      y += 10;
+      const verdictBoxWidth = 46;
+      const verdictBoxX = pageWidth - margin - verdictBoxWidth - 4;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text('VIDEO ANALIZADO', textX, y + 9);
+      pdf.setFontSize(11);
+      pdf.setTextColor(15, 23, 42);
+      const nameLines = pdf.splitTextToSize(pdfVideoName, verdictBoxX - textX - 4).slice(0, 2);
+      pdf.text(nameLines, textX, y + 16);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(9);
+      pdf.setTextColor(100, 116, 139);
+      pdf.text(`ID: ${pdfVideoId}`, textX, y + 16 + nameLines.length * 5 + 2);
 
-      y = drawSectionHeader(pdf, 'Análisis y metadatos', margin, y, contentWidth);
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect(margin, y, contentWidth, 56, 3, 3, 'FD');
+      pdf.setFillColor(...verdictColor);
+      pdf.roundedRect(verdictBoxX, y + 5, verdictBoxWidth, 28, 3, 3, 'F');
+      pdf.setTextColor(255, 255, 255);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.text('VEREDICTO', verdictBoxX + verdictBoxWidth / 2, y + 11, { align: 'center' });
+      pdf.setFontSize(15);
+      pdf.text(sanitizePdfText(verdictText), verdictBoxX + verdictBoxWidth / 2, y + 19, { align: 'center' });
+      pdf.setFontSize(10);
+      pdf.text(`${verdictPercent || 0}% de FAKE`, verdictBoxX + verdictBoxWidth / 2, y + 28, { align: 'center' });
+      y += cardHeight + 8;
 
-      const leftX = margin + 4;
-      const rightX = margin + contentWidth / 2 + 2;
-      const leftY = y + 8;
-      const rightY = y + 8;
+      // Resumen
+      startSection('Resumen principal', 20);
+      drawParagraph(
+        finalVerdict
+          ? `El análisis combinado de audio y video concluye ${getVerdictDisplayLabel(finalVerdict.etiqueta)} con una probabilidad de contenido falso de ${verdictPercent || 0}%. Nivel de riesgo: ${riskLevel}. Señal dominante: ${dominantSignal}.`
+          : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.'
+      );
 
-      addWrappedText(pdf, `Probabilidad absoluta: ${verdictPercent || 0}%`, leftX, leftY, contentWidth / 2 - 8, 4.8, 9.5, 'bold', isFake ? [220, 38, 38] : [5, 150, 90]);
-      addWrappedText(pdf, `Veredicto: ${formatValue(getVerdictDisplayLabel(finalVerdict?.etiqueta || verdictRaw))}`, leftX, leftY + 1, contentWidth / 2 - 8, 4.8, 9.5);
-      addWrappedText(pdf, `Video (FAKE): ${formatValue(videoResult?.fakeConfidence || 'Sin dato')} - ${formatValue(videoResult?.verdict || 'Sin dato')}`, leftX, leftY + 1, contentWidth / 2 - 8, 4.8, 9);
-      addWrappedText(pdf, `Audio (FAKE): ${formatValue(audioResult?.fakeConfidence || 'Sin dato')} - ${formatValue(audioResult?.verdict || 'Sin dato')}`, leftX, leftY + 1, contentWidth / 2 - 8, 4.8, 9);
-
-      drawKeyValue(pdf, 'Hash SHA-256', sanitizePdfText(formatValue(videoMeta?.hash_video)), rightX, rightY, 24, contentWidth / 2 - 34);
-      drawKeyValue(pdf, 'Duración', sanitizePdfText(formatValue(videoMeta?.duracion ? `${videoMeta.duracion} s` : 'Sin dato')), rightX, rightY + 1, 24, contentWidth / 2 - 30);
-      drawKeyValue(pdf, 'Resolución', sanitizePdfText(formatValue(videoMeta?.resolucion)), rightX, rightY + 1, 24, contentWidth / 2 - 30);
-      drawKeyValue(pdf, 'Plataforma', sanitizePdfText(formatValue(videoMeta?.red_social)), rightX, rightY + 1, 24, contentWidth / 2 - 30);
-
-      y += 64;
-
-      y = drawSectionHeader(pdf, 'Desglose de detección', margin, y, contentWidth);
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect(margin, y, contentWidth, 34, 3, 3, 'FD');
-
+      // Desglose con barras
       const breakdownItems = [
-        { label: 'Video (Probabilidad de FAKE)', value: videoFakeConfidence },
-        { label: 'Audio (Probabilidad de FAKE)', value: audioConfidence },
+        { label: 'Video (probabilidad de FAKE)', value: videoFakeConfidence, detail: videoResult?.verdict },
+        { label: 'Audio (probabilidad de FAKE)', value: audioConfidence, detail: audioResult?.verdict },
+        { label: 'Resultado final (promedio)', value: verdictPercent, detail: finalVerdict?.etiqueta },
       ];
-
-      const columnWidth = contentWidth / 3;
+      const rowHeight = 16;
+      startSection('Desglose de detección', breakdownItems.length * rowHeight + 6);
+      drawCard(breakdownItems.length * rowHeight + 6);
       breakdownItems.forEach((item, index) => {
-        const columnX = margin + index * columnWidth + 4;
+        const rowY = y + 8 + index * rowHeight;
+        const value = Math.max(0, Math.min(100, Number(item.value) || 0));
+        const barWidth = contentWidth - 10;
         pdf.setFont('helvetica', 'bold');
         pdf.setFontSize(9);
         pdf.setTextColor(51, 65, 85);
-        pdf.text(item.label, columnX, y + 9, { maxWidth: columnWidth - 8 });
-        pdf.setFontSize(14);
-        pdf.setTextColor(37, 99, 235);
-        pdf.text(`${item.value}%`, columnX, y + 20);
+        pdf.text(item.label, margin + 5, rowY);
+        if (item.detail) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(100, 116, 139);
+          pdf.text(sanitizePdfText(getVerdictDisplayLabel(item.detail)), margin + 75, rowY);
+        }
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(`${value}%`, margin + contentWidth - 5, rowY, { align: 'right' });
+        pdf.setFillColor(226, 232, 240);
+        pdf.roundedRect(margin + 5, rowY + 2.5, barWidth, 3, 1.5, 1.5, 'F');
+        if (value > 0) {
+          pdf.setFillColor(...(value >= 50 ? [220, 38, 38] : [5, 150, 90]));
+          pdf.roundedRect(margin + 5, rowY + 2.5, Math.max(3, (barWidth * value) / 100), 3, 1.5, 1.5, 'F');
+        }
       });
+      y += breakdownItems.length * rowHeight + 12;
 
-      y += 40;
+      // Metadatos
+      const metadataRows = [
+        ['Nombre', pdfVideoName],
+        ['Hash SHA-256', sanitizePdfText(formatValue(videoMeta?.hash_video))],
+        ['Duración', sanitizePdfText(formatValue(videoMeta?.duracion ? `${videoMeta.duracion} s` : 'Sin dato'))],
+        ['Resolución', sanitizePdfText(formatValue(videoMeta?.resolucion))],
+        ['Plataforma', sanitizePdfText(formatValue(videoMeta?.red_social))],
+      ];
+      startSection('Metadatos del archivo', 30);
+      pdf.setFontSize(9);
+      metadataRows.forEach(([label, value], index) => {
+        pdf.setFont('helvetica', 'normal');
+        const lines = pdf.splitTextToSize(value, contentWidth - 50);
+        const height = Math.max(8, lines.length * 4 + 4);
+        ensureSpace(height);
+        pdf.setFillColor(index % 2 === 0 ? 241 : 255, index % 2 === 0 ? 245 : 255, index % 2 === 0 ? 249 : 255);
+        pdf.rect(margin, y, contentWidth, height, 'F');
+        pdf.setFont('helvetica', 'bold');
+        pdf.setTextColor(100, 116, 139);
+        pdf.text(label, margin + 4, y + 5.5);
+        pdf.setFont('helvetica', 'normal');
+        pdf.setTextColor(15, 23, 42);
+        pdf.text(lines, margin + 46, y + 5.5);
+        y += height;
+      });
+      y += 8;
 
-      y = drawSectionHeader(pdf, 'Recomendación y recursos', margin, y, contentWidth);
-      pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(226, 232, 240);
-      pdf.roundedRect(margin, y, contentWidth, 40, 3, 3, 'FD');
-      y = addWrappedText(
-        pdf,
+      // Interpretación
+      startSection('Interpretación y recomendación', 30);
+      drawParagraph(
         finalVerdict
-          ? `Se recomienda revisar el resultado con los metadatos y el material original para una validación adicional. El sistema concluye ${getVerdictDisplayLabel(finalVerdict.etiqueta)}.`
-          : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.',
-        margin + 4,
-        y + 8,
-        contentWidth - 8,
-        5.5,
-        10
+          ? `El resultado final se obtiene promediando la probabilidad de FAKE del video y del audio; un porcentaje mayor indica mayor probabilidad de contenido falso. Se recomienda contrastar este resultado con los metadatos y el material original antes de tomar decisiones. Este informe es un apoyo técnico y no reemplaza un peritaje oficial.`
+          : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.'
       );
-      y = addWrappedText(pdf, 'Recursos de verificación: INCIBE, JNE | Factchecking y Portal Denuncias - Policía Nacional.', margin + 4, y + 3, contentWidth - 8, 5, 9);
+
+      if (isFake && finalVerdict) {
+        startSection('Recursos de verificación', verificationResources.length * 12);
+        verificationResources.forEach((resource) => {
+          ensureSpace(14);
+          drawCard(12);
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(9);
+          pdf.setTextColor(15, 23, 42);
+          pdf.text(sanitizePdfText(resource.title), margin + 5, y + 5);
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(37, 99, 235);
+          pdf.textWithLink(resource.url, margin + 5, y + 9.5, { url: resource.url });
+          pdf.setTextColor(100, 116, 139);
+          pdf.text(sanitizePdfText(resource.description), margin + 70, y + 7, { maxWidth: contentWidth - 75 });
+          y += 14;
+        });
+      }
 
       const fileName = `reporte-veracidad-${videoMeta?.hash_video || 'riqssi'}.pdf`;
       const totalPages = pdf.getNumberOfPages();
@@ -415,10 +460,10 @@ export default function ReportView({ analysisResult, user }) {
       ) : null}
 
       {/* Main Analysis Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-4 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:flex-1 lg:min-h-0">
         {/* Probability Gauge Card */}
-        <section className="lg:col-span-4 bg-white border border-slate-100 rounded-xl p-4 flex flex-col items-center justify-center text-center shadow-sm lg:min-h-0 lg:overflow-hidden">
-          <div className="mb-2 w-full max-w-xs rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left shadow-sm">
+        <section className="lg:col-span-4 bg-white border border-slate-100 rounded-xl p-6 lg:p-5 flex flex-col items-center justify-center text-center shadow-sm lg:min-h-0 lg:overflow-hidden">
+          <div className="mb-3 w-full max-w-xs rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-left shadow-sm">
             <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">Video analizado</div>
             <div className="mt-2">
               <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Nombre</div>
@@ -426,7 +471,7 @@ export default function ReportView({ analysisResult, user }) {
                 {analysisResult?.download?.video?.nombrevideo || analysisResult?.download?.video?.hash_video || 'SIN NOMBRE'}
               </div>
             </div>
-            <div className="mt-2 border-t border-slate-200 pt-1">
+            <div className="mt-3 border-t border-slate-200 pt-2">
               <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">ID</div>
               <div className="mt-1 break-all font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-600">
                 {analysisResult?.download?.video?.hash_video?.slice(0, 16)?.toUpperCase() || 'SIN-ID'}
@@ -435,14 +480,14 @@ export default function ReportView({ analysisResult, user }) {
           </div>
 
           <h2
-            className="text-xl font-light mb-2 tracking-wide"
+            className="text-2xl font-light mb-4 lg:mb-2 tracking-wide"
             style={{ color: isFake ? '#dc2626' : '#10b981' }}
           >
             Probabilidad Absoluta
           </h2>
 
           {/* Gauge Container */}
-          <div className="relative mx-auto mb-3 h-52 w-52 lg:h-36 lg:w-36">
+          <div className="relative mx-auto mb-8 lg:mb-4 h-52 w-52 lg:h-[clamp(8rem,26vh,13rem)] lg:w-[clamp(8rem,26vh,13rem)]">
             <svg className="block h-full w-full" viewBox="0 0 200 200" aria-hidden="true">
               <circle 
                 className="fill-none stroke-slate-100" 
@@ -461,20 +506,20 @@ export default function ReportView({ analysisResult, user }) {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <span className={`mb-2 rounded-full px-3 py-1 text-[11px] font-black tracking-[0.25em] uppercase shadow-sm ${isFake ? 'bg-red-600 text-white ring-2 ring-red-200' : 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-200'}`}>{isFake ? 'FAKE' : 'VERDADERO'}</span>
-              <span className={`text-5xl lg:text-3xl font-bold leading-none ${isFake ? 'text-red-600 drop-shadow-sm' : 'text-emerald-600 drop-shadow-sm'}`}>{verdictPercent || 0}%</span>
+              <span className={`text-5xl lg:text-4xl font-bold leading-none ${isFake ? 'text-red-600 drop-shadow-sm' : 'text-emerald-600 drop-shadow-sm'}`}>{verdictPercent || 0}%</span>
             </div>
           </div>
 
-          <p className="max-w-xs text-sm leading-relaxed text-slate-600">
+          <p className="max-w-xs text-lg lg:text-base leading-relaxed text-slate-600">
             {finalVerdict ? `Veredicto final: ${finalVerdict.veredicto_final}.` : 'Aún no hay un veredicto final calculado para este archivo.'}
           </p>
           {finalVerdict ? (
-            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500 lg:hidden">
+            <p className="mt-3 lg:mt-2 max-w-md text-sm lg:text-xs leading-relaxed text-slate-500">
               El resultado final se obtiene promediando la probabilidad de FAKE del video y la probabilidad de FAKE del audio. Un porcentaje mayor indica mayor probabilidad de contenido falso.
             </p>
           ) : null}
 
-          <div className="mt-3 w-full max-w-xs space-y-3 text-left">
+          <div className="mt-6 lg:mt-3 w-full max-w-xs space-y-3 text-left">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                 <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Señal dominante</div>
@@ -489,16 +534,18 @@ export default function ReportView({ analysisResult, user }) {
         </section>
 
         {/* Forensic Analysis Card */}
-        <section className="lg:col-span-8 bg-white border border-slate-100 rounded-xl overflow-hidden flex flex-col shadow-sm lg:min-h-0">
-          <div className="px-6 py-3 flex justify-between items-center text-slate-900 font-semibold">
+        <div className="lg:col-span-8 flex flex-col gap-4 lg:min-h-0">
+        <section className="bg-white border border-slate-100 rounded-xl overflow-hidden flex flex-col shadow-sm lg:flex-1 lg:min-h-0">
+          <div className="px-6 py-4 lg:py-3 flex justify-between items-center text-slate-900 font-semibold">
             <h2 className="text-xl"  style={{ color: '#2563eb' }} >Análisis Forense Facial</h2>
             <span className="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-full border border-blue-200 uppercase font-bold">
               {finalVerdict ? 'ANÁLISIS COMPLETO' : 'MODO ESCANEO ACTIVO'}
             </span>
           </div>
 
-          <div className="relative grow px-6 pb-4 flex flex-col lg:min-h-0">
-            <div className="relative w-full aspect-video lg:aspect-auto lg:flex-1 lg:min-h-0 bg-slate-900 rounded-lg overflow-hidden border border-slate-200 shadow-inner">
+          <div className="relative grow px-6 pb-6 lg:pb-4 flex flex-col lg:min-h-0">
+            <div className="lg:flex-1 lg:min-h-0 flex justify-center">
+            <div className="relative w-full aspect-video lg:w-auto lg:h-full lg:max-w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-200 shadow-inner">
               <img 
                 alt="Forensic Analysis Frame" 
                 className="w-full h-full object-cover opacity-70" 
@@ -518,9 +565,10 @@ export default function ReportView({ analysisResult, user }) {
                 </button>
               </div>
             </div>
+            </div>
 
             {/* Summary Box */}
-            <div className="mt-3 p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div className="mt-4 lg:mt-3 p-4 lg:p-3 bg-slate-50 border border-slate-200 rounded-lg">
               <div className="flex items-center gap-2 mb-2 text-slate-700">
                 <FileText className="h-4 w-4" />
                 <h3 className="text-xs font-bold uppercase tracking-widest">Resumen del peritaje técnico</h3>
@@ -533,10 +581,9 @@ export default function ReportView({ analysisResult, user }) {
             </div>
           </div>
         </section>
-      </div>
 
-      {/* Details Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 items-stretch lg:shrink-0">
+        {/* Details Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch lg:shrink-0">
         {/* Detection Breakdown */}
         <section className="flex h-full flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
           <SectionHeader
@@ -626,6 +673,8 @@ export default function ReportView({ analysisResult, user }) {
             ))}
           </div>
         </section> : null}
+      </div>
+        </div>
       </div>
     </div>
   );

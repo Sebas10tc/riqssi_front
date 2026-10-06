@@ -222,8 +222,8 @@ export default function AnalysisView({
   }, [thumbnailUrl]);
 
   return (
-    <div className="w-full px-6 py-6 flex flex-col lg:flex-row items-center justify-center gap-12 h-full">
-      <section className="lg:col-span-3 w-full max-w-2xl" data-purpose="video-analysis-display">
+    <div className="w-full px-6 py-4 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-8 h-full lg:overflow-hidden">
+      <section className="lg:col-span-3 w-full max-w-2xl lg:max-w-[min(42rem,calc((100vh-12rem)*1.78))]" data-purpose="video-analysis-display">
         <div className="relative rounded-xl overflow-hidden border border-slate-200 shadow-2xl bg-slate-100 aspect-video flex flex-col">
           <div className="relative grow flex items-center justify-center overflow-hidden">
             <img 
@@ -272,7 +272,7 @@ export default function AnalysisView({
             </div>
           </div>
           
-          <div className="bg-white p-6 grid grid-cols-3 gap-4 border-t border-slate-200">
+          <div className="bg-white p-6 lg:p-3 grid grid-cols-3 gap-4 border-t border-slate-200">
             <div>
               <p className="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Resolución</p>
               <p className="text-sm font-medium text-slate-700">{videoMeta.resolucion || 'Sin dato'}</p>
@@ -289,15 +289,15 @@ export default function AnalysisView({
         </div>
       </section>
 
-      <aside className="lg:w-1/3 space-y-8">
-        <div className="space-y-4">
-          <h1 className="text-6xl font-bold tracking-tight text-slate-900" style={{ color: '#2563eb' }}>Analizando<br />Video...</h1>
-          <p className="text-slate-500 text-lg leading-relaxed">
+      <aside className="lg:w-1/3 space-y-8 lg:space-y-4">
+        <div className="space-y-4 lg:space-y-2">
+          <h1 className="text-6xl lg:text-5xl font-bold tracking-tight text-slate-900" style={{ color: '#2563eb' }}>Analizando<br />Video...</h1>
+          <p className="text-slate-500 text-lg lg:text-base leading-relaxed">
             Desglosando capas de video y audio para detectar patrones de IA y anomalías sintéticas.
           </p>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-4 lg:space-y-2">
           <StatusCard
             icon={<FileText className="h-5 w-5" />}
             title="Extracción de Características"
@@ -321,7 +321,7 @@ export default function AnalysisView({
           />
         </div>
 
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 flex gap-4">
+        <div className="bg-blue-50 border border-blue-100 rounded-xl p-6 lg:p-4 flex gap-4">
           <ShieldCheck className="h-6 w-6 text-blue-600 shrink-0" />
           <div>
             <h4 className="text-sm font-bold text-slate-800">Privacidad de Datos Garantizada</h4>
@@ -337,7 +337,7 @@ export default function AnalysisView({
 
 function StatusCard({ icon, title, progress, status, inactive = false }) {
   return (
-    <div className={`bg-white border border-slate-200 rounded-xl p-5 shadow-sm transition-opacity duration-300 ${inactive ? 'opacity-60' : ''}`}>
+    <div className={`bg-white border border-slate-200 rounded-xl p-5 lg:p-3 shadow-sm transition-opacity duration-300 ${inactive ? 'opacity-60' : ''}`}>
       <div className="flex items-start gap-4">
         <div className={`mt-1 p-2 rounded-lg border ${inactive ? 'bg-slate-50 border-slate-200' : 'bg-blue-50 border-blue-100'}`}>
           <div className={inactive ? 'text-slate-400' : 'text-blue-600'}>{icon}</div>

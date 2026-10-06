@@ -241,7 +241,7 @@ export default function App() {
     }
   };
 
-  const fitScreen = currentView === View.DASHBOARD || currentView === View.REPORT;
+  const fitScreen = [View.DASHBOARD, View.REPORT, View.ANALYSIS, View.PRICE].includes(currentView);
 
   return (
     <div className={`min-h-screen flex flex-col bg-[#f8fafc] font-sans selection:bg-blue-100 selection:text-blue-900 ${fitScreen ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
