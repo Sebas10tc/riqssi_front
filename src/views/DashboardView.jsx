@@ -226,16 +226,16 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
   };
 
   return (
-    <div className="container mx-auto px-8 py-6 lg:h-full lg:flex lg:flex-col">
-      <section className="mb-6 lg:shrink-0">
+    <div className="container mx-auto px-8 py-10">
+      <section className="mb-10">
         <h1 className="text-3xl font-extrabold mb-2 text-slate-900" style={{ color: '#2563eb' }}>Hola, {user?.name || 'Seba'} :D</h1>
         <p className="text-slate-500">Descubre si el video que estás viendo es verdadero o ha sido manipulado por la IA.</p>
       </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
         <div 
           onClick={handleLocalVideoClick}
-          className="lg:col-span-2 bg-slate-50/50 rounded-xl p-8 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center min-h-48 lg:min-h-0 relative overflow-hidden group hover:bg-slate-50 transition-colors cursor-pointer"
+          className="lg:col-span-2 bg-slate-50/50 rounded-xl p-8 border-2 border-dashed border-slate-300 flex flex-col items-center justify-center min-h-87.5 relative overflow-hidden group hover:bg-slate-50 transition-colors cursor-pointer"
         >
           <input
             ref={fileInputRef}
@@ -283,11 +283,11 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
       </div>
 
       {latestAnalysis ? (
-        <section className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm lg:shrink-0">
-          <div className="flex items-center justify-between mb-3">
+        <section className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-2">
               <History className="w-4 h-4 text-slate-400" />
-              <h3 className="text-sm font-bold text-slate-900">Último Análisis</h3>
+              <h3 className="text-sm font-bold text-blue-600">Último Análisis</h3>
             </div>
             <button 
               onClick={() => setView(View.HISTORY)}

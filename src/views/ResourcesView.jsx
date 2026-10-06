@@ -30,7 +30,7 @@ export default function ResourcesView() {
             </div>
             
             <div className="bg-white border-l-4 border-red-500 rounded-xl p-6 shadow-sm">
-              <h3 className="text-xs font-bold uppercase tracking-widest text-slate-500 mb-4">Resumen Ejecutivo</h3>
+              <h3 className="text-xs font-bold uppercase tracking-widest text-blue-600 mb-4">Resumen Ejecutivo</h3>
               <p className="text-sm leading-relaxed text-slate-700">
                 Resultado Absoluto: <span className="text-red-600 font-bold">Alta Probabilidad de IA</span>. 
                 Se detectaron artefactos de generación sintética en la coherencia de texturas cutáneas.
@@ -46,7 +46,7 @@ export default function ResourcesView() {
       </section>
 
       <section className="mb-12">
-        <h2 className="text-3xl font-bold mb-3 text-slate-900 leading-tight">Recursos y Denuncia de Deepfakes</h2>
+        <h2 className="text-3xl font-bold mb-3 text-blue-600 leading-tight">Recursos y Denuncia de Deepfakes</h2>
         <p className="text-slate-600 text-lg mb-10">Utilice estas herramientas oficiales para tomar medidas contra el contenido manipulado y proteger la integridad de la información.</p>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -92,7 +92,7 @@ function ResourceCard({ icon, title, description, linkText }) {
   return (
     <div className="bg-white border border-slate-200 rounded-xl p-8 flex flex-col h-full shadow-sm hover:shadow-md transition-shadow">
       <div className="mb-6">{icon}</div>
-      <h3 className="text-2xl font-bold mb-4 text-slate-900">{title}</h3>
+      <h3 className="text-2xl font-bold mb-4 text-blue-600">{title}</h3>
       <p className="text-slate-600 text-sm mb-8 grow leading-relaxed">
         {description}
       </p>

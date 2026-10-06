@@ -130,7 +130,7 @@ export default function RiqssiFAQ() {
       <main className="grow container mx-auto px-4 py-8 max-w-5xl w-full">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-bold text-slate-900 tracking-tight" style={{ color: '#2563eb' }}>
               Preguntas Frecuentes
             </h1>
             <p className="text-sm text-slate-500 mt-1">

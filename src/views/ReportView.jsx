@@ -51,7 +51,7 @@ function getVerdictDisplayLabel(verdict) {
 function SectionHeader({ icon, title, description }) {
   return (
     <div className="mb-3">
-      <h3 className="flex items-center gap-2 text-sm font-bold text-slate-900">
+      <h3 className="flex items-center gap-2 text-sm font-bold text-blue-600">
         {icon}
         {title}
       </h3>
@@ -436,9 +436,9 @@ export default function ReportView({ analysisResult, user }) {
   }
 
   return (
-    <div className="container mx-auto px-4 py-3 lg:h-full lg:flex lg:flex-col">
+    <div className="container mx-auto px-4 py-8">
       {/* Report Identification */}
-      <div className="flex justify-between items-end mb-3 lg:shrink-0">
+      <div className="flex justify-between items-end mb-8">
         <div>
           <h1 className="text-xl font-bold text-slate-900" style={{ color: '#2563eb' }} >Reporte de Veracidad Técnica</h1>
         </div>
@@ -460,9 +460,9 @@ export default function ReportView({ analysisResult, user }) {
       ) : null}
 
       {/* Main Analysis Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:flex-1 lg:min-h-0">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mb-6">
         {/* Probability Gauge Card */}
-        <section className="lg:col-span-4 bg-white border border-slate-100 rounded-xl p-6 lg:p-5 flex flex-col items-center justify-center text-center shadow-sm lg:min-h-0 lg:overflow-hidden">
+        <section className="lg:col-span-4 bg-white border border-slate-100 rounded-xl p-8 flex flex-col items-center justify-center text-center shadow-sm">
           <div className="mb-3 w-full max-w-xs rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-left shadow-sm">
             <div className="text-[10px] font-bold uppercase tracking-[0.24em] text-slate-500">Video analizado</div>
             <div className="mt-2">
@@ -480,14 +480,14 @@ export default function ReportView({ analysisResult, user }) {
           </div>
 
           <h2
-            className="text-2xl font-light mb-4 lg:mb-2 tracking-wide"
+            className="text-2xl font-light mb-4 tracking-wide"
             style={{ color: isFake ? '#dc2626' : '#10b981' }}
           >
             Probabilidad Absoluta
           </h2>
 
           {/* Gauge Container */}
-          <div className="relative mx-auto mb-8 lg:mb-4 h-52 w-52 lg:h-[clamp(8rem,26vh,13rem)] lg:w-[clamp(8rem,26vh,13rem)]">
+          <div className="relative mx-auto mb-8 h-52 w-52">
             <svg className="block h-full w-full" viewBox="0 0 200 200" aria-hidden="true">
               <circle 
                 className="fill-none stroke-slate-100" 
@@ -506,20 +506,20 @@ export default function ReportView({ analysisResult, user }) {
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
               <span className={`mb-2 rounded-full px-3 py-1 text-[11px] font-black tracking-[0.25em] uppercase shadow-sm ${isFake ? 'bg-red-600 text-white ring-2 ring-red-200' : 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-200'}`}>{isFake ? 'FAKE' : 'VERDADERO'}</span>
-              <span className={`text-5xl lg:text-4xl font-bold leading-none ${isFake ? 'text-red-600 drop-shadow-sm' : 'text-emerald-600 drop-shadow-sm'}`}>{verdictPercent || 0}%</span>
+              <span className={`text-5xl font-bold leading-none ${isFake ? 'text-red-600 drop-shadow-sm' : 'text-emerald-600 drop-shadow-sm'}`}>{verdictPercent || 0}%</span>
             </div>
           </div>
 
-          <p className="max-w-xs text-lg lg:text-base leading-relaxed text-slate-600">
+          <p className="max-w-xs text-lg leading-relaxed text-slate-600">
             {finalVerdict ? `Veredicto final: ${finalVerdict.veredicto_final}.` : 'Aún no hay un veredicto final calculado para este archivo.'}
           </p>
           {finalVerdict ? (
-            <p className="mt-3 lg:mt-2 max-w-md text-sm lg:text-xs leading-relaxed text-slate-500">
+            <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500">
               El resultado final se obtiene promediando la probabilidad de FAKE del video y la probabilidad de FAKE del audio. Un porcentaje mayor indica mayor probabilidad de contenido falso.
             </p>
           ) : null}
 
-          <div className="mt-6 lg:mt-3 w-full max-w-xs space-y-3 text-left">
+          <div className="mt-6 w-full max-w-xs space-y-3 text-left">
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
                 <div className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">Señal dominante</div>
@@ -534,18 +534,16 @@ export default function ReportView({ analysisResult, user }) {
         </section>
 
         {/* Forensic Analysis Card */}
-        <div className="lg:col-span-8 flex flex-col gap-4 lg:min-h-0">
-        <section className="bg-white border border-slate-100 rounded-xl overflow-hidden flex flex-col shadow-sm lg:flex-1 lg:min-h-0">
-          <div className="px-6 py-4 lg:py-3 flex justify-between items-center text-slate-900 font-semibold">
+        <section className="lg:col-span-8 bg-white border border-slate-100 rounded-xl overflow-hidden flex flex-col shadow-sm">
+          <div className="p-6 flex justify-between items-center text-slate-900 font-semibold">
             <h2 className="text-xl"  style={{ color: '#2563eb' }} >Análisis Forense Facial</h2>
             <span className="bg-blue-50 text-blue-600 text-[10px] px-3 py-1 rounded-full border border-blue-200 uppercase font-bold">
               {finalVerdict ? 'ANÁLISIS COMPLETO' : 'MODO ESCANEO ACTIVO'}
             </span>
           </div>
 
-          <div className="relative grow px-6 pb-6 lg:pb-4 flex flex-col lg:min-h-0">
-            <div className="lg:flex-1 lg:min-h-0 flex justify-center">
-            <div className="relative w-full aspect-video lg:w-auto lg:h-full lg:max-w-full bg-slate-900 rounded-lg overflow-hidden border border-slate-200 shadow-inner">
+          <div className="relative grow px-6 pb-6">
+            <div className="relative w-full aspect-video bg-slate-900 rounded-lg overflow-hidden border border-slate-200 shadow-inner">
               <img 
                 alt="Forensic Analysis Frame" 
                 className="w-full h-full object-cover opacity-70" 
@@ -565,11 +563,10 @@ export default function ReportView({ analysisResult, user }) {
                 </button>
               </div>
             </div>
-            </div>
 
             {/* Summary Box */}
-            <div className="mt-4 lg:mt-3 p-4 lg:p-3 bg-slate-50 border border-slate-200 rounded-lg">
-              <div className="flex items-center gap-2 mb-2 text-slate-700">
+            <div className="mt-6 p-4 bg-slate-50 border border-slate-200 rounded-lg">
+              <div className="flex items-center gap-2 mb-2 text-blue-600">
                 <FileText className="h-4 w-4" />
                 <h3 className="text-xs font-bold uppercase tracking-widest">Resumen del peritaje técnico</h3>
               </div>
@@ -581,9 +578,10 @@ export default function ReportView({ analysisResult, user }) {
             </div>
           </div>
         </section>
+      </div>
 
-        {/* Details Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch lg:shrink-0">
+      {/* Details Section */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-stretch">
         {/* Detection Breakdown */}
         <section className="flex h-full flex-col rounded-xl border border-slate-100 bg-white p-4 shadow-sm">
           <SectionHeader
@@ -673,8 +671,6 @@ export default function ReportView({ analysisResult, user }) {
             ))}
           </div>
         </section> : null}
-      </div>
-        </div>
       </div>
     </div>
   );

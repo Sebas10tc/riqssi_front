@@ -342,7 +342,7 @@ export default function UserManagementView({ user }) {
   return (
     <div className="container mx-auto p-8">
       <section className="mb-8">
-        <h1 className="text-4xl font-bold text-slate-900 style={{ color: '#2563eb' }}">Gestión de Usuarios</h1>
+        <h1 className="text-4xl font-bold text-slate-900" style={{ color: '#2563eb' }}>Gestión de Usuarios</h1>
             <p className="text-slate-500 mt-2">Administra los accesos del sistema forense, monitorea niveles de membresía y controla los permisos de análisis de red.</p>
           </section>
 

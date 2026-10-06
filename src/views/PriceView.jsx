@@ -65,7 +65,7 @@ function PlanCard({ plan, onSelect, isProcessing }) {
 
   return (
     <div
-      className={`bg-white rounded-2xl p-10 lg:p-6 flex flex-col relative ${
+      className={`bg-white rounded-2xl p-10 flex flex-col relative ${
         highlighted
           ? "border-2 border-blue-600 scale-105 z-10"
           : "border border-slate-100"
@@ -81,7 +81,7 @@ function PlanCard({ plan, onSelect, isProcessing }) {
         </div>
       )}
 
-      <div className="mb-8 lg:mb-4">
+      <div className="mb-8">
         <span
           className={
             highlighted
@@ -104,7 +104,7 @@ function PlanCard({ plan, onSelect, isProcessing }) {
         </div>
       </div>
 
-      <div className="space-y-4 lg:space-y-3 grow">
+      <div className="space-y-4 grow">
         {plan.features.map((feature) => (
           <div className="flex items-start gap-3" key={feature}>
             <CheckIcon filled={highlighted} />
@@ -120,7 +120,7 @@ function PlanCard({ plan, onSelect, isProcessing }) {
       </div>
 
         <button
-        className={`mt-10 lg:mt-5 w-full py-3 font-semibold rounded-lg transition-all duration-200 ${
+        className={`mt-10 w-full py-3 font-semibold rounded-lg transition-all duration-200 ${
           highlighted
             ? "bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
             : "bg-slate-100 border border-slate-200 text-blue-600 hover:bg-slate-200"
@@ -137,12 +137,14 @@ function PlanCard({ plan, onSelect, isProcessing }) {
 }
 
 export default function RiqssiPricing({ user }) {
-  const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
   const [processingId, setProcessingId] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [operationCode, setOperationCode] = useState('');
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
+  const qrPath = import.meta.env.VITE_YAPE_QR_URL || '/storage/yape/qr.png';
+  const yapeQrUrl = /^https?:\/\//i.test(qrPath) ? qrPath : `${API_URL}${qrPath.startsWith('/') ? '' : '/'}${qrPath}`;
 
   const handleSelect = (planId) => {
     if (!user?.nombreuser) {
@@ -197,14 +199,14 @@ export default function RiqssiPricing({ user }) {
   };
 
   return (
-    <div className="min-h-screen lg:min-h-0 lg:h-full flex flex-col text-slate-900 font-sans bg-slate-50">
+    <div className="min-h-screen flex flex-col text-slate-900 font-sans bg-slate-50">
       {/* Main */}
-      <main className="grow max-w-7xl mx-auto px-8 py-16 lg:py-4 w-full lg:flex lg:flex-col lg:justify-center">
-        <div className="text-center mb-16 lg:mb-6">
-          <h1 className="text-4xl lg:text-3xl font-bold text-slate-900 mb-4 lg:mb-2" style={{ color: '#2563eb' }}>
+      <main className="grow max-w-7xl mx-auto px-8 py-16 w-full">
+        <div className="text-center mb-16">
+          <h1 className="text-4xl font-bold text-slate-900 mb-4" style={{ color: '#2563eb' }}>
             Seleccione su Plan de Análisis
           </h1>
-          <p className="text-slate-500 text-lg lg:text-base max-w-2xl mx-auto">
+          <p className="text-slate-500 text-lg max-w-2xl mx-auto">
             Escale sus capacidades de investigación con nuestras soluciones
             forenses de alta precisión diseñadas para infraestructuras
             críticas.
@@ -212,7 +214,7 @@ export default function RiqssiPricing({ user }) {
         </div>
         {message ? <p className="mb-6 text-center text-sm font-semibold text-slate-600">{message}</p> : null}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 lg:mb-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 items-stretch" style={{ color: '#2563eb' }}>
           {PLANS.map((plan) => (
             <PlanCard
               key={plan.id}
@@ -229,7 +231,7 @@ export default function RiqssiPricing({ user }) {
           <form onSubmit={submitPayment} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="text-xl font-bold text-slate-900">Pagar plan {selectedPlan}</h2>
             <p className="mt-2 text-sm text-slate-500">Escanea el QR de Yape y adjunta tu comprobante.</p>
-            <img src={import.meta.env.VITE_YAPE_QR_URL || '/storage/yape/qr.png'} alt="QR de Yape" className="mx-auto my-5 h-52 w-52 object-contain" />
+            <img src={yapeQrUrl} alt="QR de Yape" className="mx-auto my-5 h-52 w-52 object-contain" />
             <input className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Código de operación" value={operationCode} onChange={(event) => setOperationCode(event.target.value)} />
             <input className="mb-5 w-full rounded-lg border border-slate-200 p-3 text-sm" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(event) => setProof(event.target.files?.[0] || null)} />
             {message ? <p className="mb-4 text-sm font-semibold text-red-600">{message}</p> : null}

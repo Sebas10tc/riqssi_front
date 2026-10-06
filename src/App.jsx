@@ -241,10 +241,8 @@ export default function App() {
     }
   };
 
-  const fitScreen = [View.DASHBOARD, View.REPORT, View.ANALYSIS, View.PRICE].includes(currentView);
-
   return (
-    <div className={`min-h-screen flex flex-col bg-[#f8fafc] font-sans selection:bg-blue-100 selection:text-blue-900 ${fitScreen ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
+    <div className="min-h-screen flex flex-col bg-[#f8fafc] font-sans selection:bg-blue-100 selection:text-blue-900">
       <Navbar
         currentView={currentView}
         setView={setCurrentView}
@@ -252,7 +250,7 @@ export default function App() {
         onProfileClick={() => setIsDrawerOpen(true)}
       />
  
-      <main className={`grow relative ${fitScreen ? 'lg:min-h-0 lg:overflow-hidden' : ''}`}>
+      <main className="grow relative">
         {currentView === View.ANALYSIS && analysisThumbnailUrl ? (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <img
@@ -269,7 +267,6 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
-            className={fitScreen ? 'lg:h-full' : ''}
           >
             {renderView()}
           </motion.div>
