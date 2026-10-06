@@ -241,8 +241,10 @@ export default function App() {
     }
   };
 
-return (
-    <div className="min-h-screen flex flex-col bg-[#f8fafc] font-sans selection:bg-blue-100 selection:text-blue-900">
+  const fitScreen = currentView === View.DASHBOARD || currentView === View.REPORT;
+
+  return (
+    <div className={`min-h-screen flex flex-col bg-[#f8fafc] font-sans selection:bg-blue-100 selection:text-blue-900 ${fitScreen ? 'lg:h-screen lg:overflow-hidden' : ''}`}>
       <Navbar
         currentView={currentView}
         setView={setCurrentView}
@@ -250,7 +252,7 @@ return (
         onProfileClick={() => setIsDrawerOpen(true)}
       />
  
-      <main className="grow relative">
+      <main className={`grow relative ${fitScreen ? 'lg:min-h-0 lg:overflow-hidden' : ''}`}>
         {currentView === View.ANALYSIS && analysisThumbnailUrl ? (
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
             <img
@@ -267,6 +269,7 @@ return (
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.3, ease: 'easeInOut' }}
+            className={fitScreen ? 'lg:h-full' : ''}
           >
             {renderView()}
           </motion.div>
