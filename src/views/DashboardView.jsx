@@ -1,9 +1,9 @@
-import { UploadCloud, Link as LinkIcon, History, PlayCircle, MoreVertical } from 'lucide-react';
+﻿import { UploadCloud, Link as LinkIcon, History, PlayCircle, MoreVertical } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { View } from '../types';
 import { downloadLinkForAnalysis, getUserHistory, uploadLocalVideo } from '../services/linkService';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 
 function getAssetUrl(assetPath) {
   if (!assetPath) {

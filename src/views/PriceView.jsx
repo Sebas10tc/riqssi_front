@@ -1,4 +1,4 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 
 const PLANS = [
   {
@@ -137,7 +137,7 @@ function PlanCard({ plan, onSelect, isProcessing }) {
 }
 
 export default function RiqssiPricing({ user }) {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
   const [processingId, setProcessingId] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [operationCode, setOperationCode] = useState('');

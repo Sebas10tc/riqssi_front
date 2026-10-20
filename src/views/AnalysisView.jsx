@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { FileText, Clock, Music, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 import { View } from '../types';
 import { prepareTracksForAnalysis, runPreparedAnalysis } from '../services/linkService';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 
 function formatAnalysisErrorMessage(error) {
   const message = error?.message || 'No se pudo completar el análisis.';
   const lowerMessage = message.toLowerCase();
 
   if (lowerMessage.includes('no se pudo conectar al backend') || lowerMessage.includes('failed to fetch')) {
-    return `${message}\n\nAcceder a ${API_URL}/docs o http://127.0.0.1:8000/docs para probar los endpoints.`;
+    return `${message}\n\nAcceder a ${API_URL}/docs para probar los endpoints.`;
   }
 
   return message;

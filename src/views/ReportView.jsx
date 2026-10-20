@@ -1,8 +1,8 @@
-import { Download, Search, Maximize2, FileText, Info } from 'lucide-react';
+﻿import { Download, Search, Maximize2, FileText, Info } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import jsPDF from 'jspdf';
 import { getExistingAnalysisReport } from '../services/linkService';
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 
 function getThumbnailUrl(thumbnailPath) {
   if (!thumbnailPath) {
@@ -678,7 +678,7 @@ export default function ReportView({ analysisResult, user }) {
 
 // Register view in historial when ReportView is mounted
 export function registerHistorial(user, videoHash) {
-  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
   if (!user || !user.nombreuser || !videoHash) return;
 
   try {

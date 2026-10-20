@@ -1,9 +1,9 @@
-import { Search, RefreshCw, Calendar, Clock, Eye, Download, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
+﻿import { Search, RefreshCw, Calendar, Clock, Eye, Download, AlertTriangle, CheckCircle, Shield } from 'lucide-react';
 import { View } from '../types';
 import { useEffect, useMemo, useState } from 'react';
 import { getUserHistory } from '../services/linkService';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 
 function getThumbnailUrl(thumbnailPath) {
   if (!thumbnailPath) return null;
