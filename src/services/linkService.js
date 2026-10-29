@@ -136,7 +136,7 @@ export async function prepareTracksForAnalysis(videoHash, nombreuser) {
     method: 'POST',
   });
 
-  await requestJson(`/video-analysis/validate-video/${tracksData.pista_video_hash}`, {
+  await requestJson(`/video-analysis/validate-video/${tracksData.pista_video_hash}?nombreuser=${encodeURIComponent(nombreuser || '')}`, {
     method: 'POST',
   });
 
@@ -167,7 +167,8 @@ export async function runPreparedAnalysis(preparedAnalysis) {
 
   if (videoTrackHash) {
     emitProgress(15, 'feature_extraction');
-    videoAnalysis = await requestJson(`/video-analysis/analyze-video/${videoTrackHash}`, { method: 'POST' });
+    const analyzeUser = nombreuserArg || preparedAnalysis?.download?.nombreuser || preparedAnalysis?.download?.video?.usuario_nombreuser || '';
+    videoAnalysis = await requestJson(`/video-analysis/analyze-video/${videoTrackHash}?nombreuser=${encodeURIComponent(analyzeUser)}`, { method: 'POST' });
     emitProgress(62, 'video_done');
   }
 

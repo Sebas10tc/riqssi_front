@@ -8,7 +8,7 @@ const PLANS = [
     price: "S/0",
     period: "/mes",
     highlighted: false,
-    features: ["2 videos al día", "Duración máxima: 1 minuto"],
+    features: ["2 videos al día", "Duración máxima: 1 minuto", "Archivos de hasta 3 MB"],
     cta: "Seleccionar Gratis",
   },
   {
@@ -22,6 +22,7 @@ const PLANS = [
     features: [
       "5 videos al día",
       "Duración máxima: 3 minutos",
+      "Archivos de hasta 4 MB",
     ],
     cta: "Iniciar Plan Básico",
   },
@@ -32,7 +33,7 @@ const PLANS = [
     price: "S/25",
     period: "/mes",
     highlighted: false,
-    features: ["Videos ilimitados", "Duración máxima: 8 minutos"],
+    features: ["Videos ilimitados", "Duración máxima: 8 minutos", "Archivos de hasta 5 MB"],
     cta: "Seleccionar Premium",
   },
 ];

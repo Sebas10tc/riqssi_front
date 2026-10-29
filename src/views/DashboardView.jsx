@@ -4,6 +4,34 @@ import { View } from '../types';
 import { downloadLinkForAnalysis, getUserHistory, uploadLocalVideo } from '../services/linkService';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
+const UPLOAD_LIMITS_MB = {
+  free: 3,
+  gratis: 3,
+  basic: 4,
+  basico: 4,
+  premium: 5,
+};
+
+function getUploadLimitMb(user) {
+  if (String(user?.role || '').toLowerCase() === 'admin') {
+    return UPLOAD_LIMITS_MB.premium;
+  }
+
+  const membership = String(user?.membership_code || user?.membership?.nombre || 'free')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const paymentStatus = String(user?.payment_status || 'approved').toLowerCase();
+  const expirationDate = user?.membership_expiration?.slice(0, 10);
+  const isExpired = expirationDate && expirationDate < new Date().toISOString().slice(0, 10);
+
+  if (['canceled', 'expired', 'denied'].includes(paymentStatus) || isExpired) {
+    return UPLOAD_LIMITS_MB.free;
+  }
+
+  return UPLOAD_LIMITS_MB[membership] || UPLOAD_LIMITS_MB.free;
+}
 
 function getAssetUrl(assetPath) {
   if (!assetPath) {
@@ -162,11 +190,17 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
       return;
     }
 
+    const uploadLimitMb = getUploadLimitMb(user);
+    if (selectedFile.size > uploadLimitMb * 1024 * 1024) {
+      setError(`El archivo supera el límite de ${uploadLimitMb} MB de tu plan.`);
+      return;
+    }
+
     setError('');
     setLoading(true);
 
     try {
-      const uploaded = await uploadLocalVideo(selectedFile, user?.username || user?.name || user?.email || 'demo@gmail.com');
+      const uploaded = await uploadLocalVideo(selectedFile, user?.nombreuser);
       const video = uploaded?.video;
 
       if (!video?.hash_video) {
@@ -248,7 +282,7 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
             <UploadCloud className="w-8 h-8 text-blue-500" />
           </div>
           <p className="text-lg font-semibold text-slate-900">Cargar Archivo de Video</p>
-          <p className="text-sm text-slate-500 mt-1">Haz clic para elegir un video de tu carpeta y empezar el análisis</p>
+          <p className="text-sm text-slate-500 mt-1">Haz clic para elegir un video de tu carpeta y empezar el análisis (máximo {getUploadLimitMb(user)} MB)</p>
           <div className="mt-6 px-3 py-1 bg-slate-200 rounded text-[10px] font-mono text-slate-700 border border-slate-300 uppercase">
             MP4
           </div>
