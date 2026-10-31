@@ -1,5 +1,7 @@
 ﻿import { useState } from "react";
 
+import YapeQrImage from '../components/YapeQrImage';
+
 const PLANS = [
   {
     id: "gratis",
@@ -144,9 +146,6 @@ export default function RiqssiPricing({ user }) {
   const [operationCode, setOperationCode] = useState('');
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
-  const qrPath = import.meta.env.VITE_YAPE_QR_URL || '/storage/yape/qr.png';
-  const yapeQrUrl = /^https?:\/\//i.test(qrPath) ? qrPath : `${API_URL}${qrPath.startsWith('/') ? '' : '/'}${qrPath}`;
-
   const handleSelect = (planId) => {
     if (!user?.nombreuser) {
       setMessage('Inicia sesión para seleccionar una membresía.');
@@ -232,7 +231,7 @@ export default function RiqssiPricing({ user }) {
           <form onSubmit={submitPayment} className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
             <h2 className="text-xl font-bold text-slate-900">Pagar plan {selectedPlan}</h2>
             <p className="mt-2 text-sm text-slate-500">Escanea el QR de Yape y adjunta tu comprobante.</p>
-            <img src={yapeQrUrl} alt="QR de Yape" className="mx-auto my-5 h-52 w-52 object-contain" />
+            <YapeQrImage className="mx-auto my-5 h-52 w-52 object-contain" />
             <input className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Código de operación" value={operationCode} onChange={(event) => setOperationCode(event.target.value)} />
             <input className="mb-5 w-full rounded-lg border border-slate-200 p-3 text-sm" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(event) => setProof(event.target.files?.[0] || null)} />
             {message ? <p className="mb-4 text-sm font-semibold text-red-600">{message}</p> : null}

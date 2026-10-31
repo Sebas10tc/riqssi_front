@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, Calendar, ArrowRight } from 'lucide-react';
 import { View } from '../types';
+import YapeQrImage from '../components/YapeQrImage';
 
 const PRIMARY_API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 const FALLBACK_API_URL = PRIMARY_API_URL.includes('localhost')
@@ -121,7 +122,7 @@ export default function RegisterView({ setView }) {
             <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
               Tu cuenta fue creada. Para activar el plan, paga por Yape y envía el comprobante.
             </div>
-            <img src={import.meta.env.VITE_YAPE_QR_URL || '/storage/yape/qr.png'} alt="QR de Yape" className="mx-auto h-56 w-56 rounded-lg border border-slate-200 object-contain" />
+            <YapeQrImage className="mx-auto h-56 w-56 rounded-lg border border-slate-200 object-contain" />
             <form onSubmit={submitPayment} className="space-y-4">
               <input className="block w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" placeholder="Código de operación" value={operationCode} onChange={(event) => setOperationCode(event.target.value)} />
               <input className="block w-full rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(event) => setProof(event.target.files?.[0] || null)} />

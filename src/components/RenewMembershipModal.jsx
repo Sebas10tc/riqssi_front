@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
+import YapeQrImage from './YapeQrImage';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://riqssi-back.onrender.com';
 
@@ -79,7 +80,7 @@ export default function RenewMembershipModal({ nombreuser, defaultPlan = 'basico
                 <option key={option.id} value={option.id}>{option.label}</option>
               ))}
             </select>
-            <img src={import.meta.env.VITE_YAPE_QR_URL || '/storage/yape/qr.png'} alt="QR de Yape" className="mx-auto my-4 h-44 w-44 object-contain" />
+            <YapeQrImage className="mx-auto my-4 h-44 w-44 object-contain" />
             <input className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm" placeholder="Código de operación" value={operationCode} onChange={(event) => setOperationCode(event.target.value)} />
             <input className="mb-4 w-full rounded-lg border border-slate-200 p-3 text-sm" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={(event) => setProof(event.target.files?.[0] || null)} />
             {message ? <p className="mb-4 text-sm font-semibold text-red-600">{message}</p> : null}
