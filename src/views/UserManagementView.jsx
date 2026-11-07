@@ -1,4 +1,4 @@
-import { Users, Building2, BarChart3, Search, Filter, Download, LogIn, Pencil, Trash2, X, RefreshCw, Server, Database, BrainCircuit, HardDrive, Cpu, MemoryStick, Timer, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
+import { Users, Building2, BarChart3, Search, Filter, Download, LogIn, Pencil, Trash2, X, RefreshCw, Server, Database, BrainCircuit, HardDrive, CheckCircle2, AlertTriangle, XCircle } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import VerificationsModal from '../components/VerificationsModal';
 
@@ -401,22 +401,11 @@ export default function UserManagementView({ user }) {
             Actualizar
           </button>
         </div>
-        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-          <SystemStatusCard title="API" item={systemStatus?.components?.api} icon={<Server className="h-5 w-5" />} loading={loadingStatus} />
-          <SystemStatusCard title="Modelo de video" item={systemStatus?.components?.video_model} icon={<BrainCircuit className="h-5 w-5" />} loading={loadingStatus} />
-          <SystemStatusCard title="Modelo de audio" item={systemStatus?.components?.audio_model} icon={<BrainCircuit className="h-5 w-5" />} loading={loadingStatus} />
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+          <SystemStatusCard title="API" item={{ status: 'operativo', detail: 'Servicio disponible' }} icon={<Server className="h-5 w-5" />} />
           <SystemStatusCard title="Base de datos" item={systemStatus?.components?.database} icon={<Database className="h-5 w-5" />} loading={loadingStatus} />
+          <SystemStatusCard title="Modelos de análisis" item={{ status: systemStatus?.components?.audio_model?.status === 'operativo' && systemStatus?.components?.video_model?.status === 'operativo' ? 'operativo' : 'error', detail: `Audio: ${systemStatus?.components?.audio_model?.status || '...'} · Video: ${systemStatus?.components?.video_model?.status || '...'}` }} icon={<BrainCircuit className="h-5 w-5" />} loading={loadingStatus} />
           <SystemStatusCard title="Almacenamiento" item={systemStatus?.components?.storage} icon={<HardDrive className="h-5 w-5" />} loading={loadingStatus} />
-          <SystemMetricCard title="Uso de CPU" value={systemStatus?.metrics?.cpu_percent} unit="%" icon={<Cpu className="h-5 w-5" />} loading={loadingStatus} />
-          <SystemMetricCard title="Uso de memoria" value={systemStatus?.metrics?.memory_percent} unit="%" icon={<MemoryStick className="h-5 w-5" />} loading={loadingStatus} />
-          <SystemMetricCard
-            title="Tiempo promedio de respuesta"
-            value={systemStatus?.metrics?.average_response_ms}
-            sampleCount={systemStatus?.metrics?.response_sample_count}
-            unit="ms"
-            icon={<Timer className="h-5 w-5" />}
-            loading={loadingStatus}
-          />
         </div>
       </section>
 
@@ -721,12 +710,6 @@ function MetricCard({ title, value, icon, onClick }) {
 
 function SystemStatusCard({ title, item, icon, loading }) {
   const status = loading ? 'cargando' : item?.status || 'error';
-  const statusLabel = {
-    operativo: 'Operativo',
-    advertencia: 'Advertencia',
-    error: 'No operativo',
-    cargando: 'Comprobando...',
-  }[status] || 'No operativo';
   const statusStyles = {
     operativo: 'border-emerald-200 bg-emerald-50 text-emerald-700',
     advertencia: 'border-amber-200 bg-amber-50 text-amber-700',
@@ -741,30 +724,8 @@ function SystemStatusCard({ title, item, icon, loading }) {
         <span className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</span>
         <StatusIcon className="h-5 w-5" />
       </div>
-      <p className="mt-3 text-xs font-bold uppercase tracking-wide">{statusLabel}</p>
+      <p className="mt-3 text-xs font-bold uppercase tracking-wide">{status}</p>
       <p className="mt-1 text-xs opacity-80">{loading ? 'Consultando...' : item?.detail || 'Sin información'}</p>
-    </div>
-  );
-}
-
-function SystemMetricCard({ title, value, sampleCount, unit, icon, loading }) {
-  const hasValue = typeof value === 'number'
-    && Number.isFinite(value)
-    && (title !== 'Tiempo promedio de respuesta' || sampleCount > 0);
-
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4 text-slate-700">
-      <div className="flex items-center justify-between">
-        <span className="flex items-center gap-2 text-sm font-semibold">{icon}{title}</span>
-      </div>
-      <p className="mt-3 text-xs font-bold uppercase tracking-wide text-slate-500">
-        {loading ? 'Consultando...' : hasValue ? `${value} ${unit}` : 'Sin datos'}
-      </p>
-      {title === 'Tiempo promedio de respuesta' && hasValue ? (
-        <p className="mt-1 text-xs text-slate-500">
-          Promedio de las últimas {sampleCount} solicitudes
-        </p>
-      ) : null}
     </div>
   );
 }
