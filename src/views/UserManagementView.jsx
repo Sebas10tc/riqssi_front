@@ -68,6 +68,30 @@ function formatDateTime(value) {
   return parsed.toLocaleString();
 }
 
+function getMembershipStatus(user) {
+  const paymentStatus = String(user.payment_status || 'approved').toLowerCase();
+  const membershipName = String(user.membership?.nombre || user.membership_code || 'free').toLowerCase();
+  const expiration = user.membership_expiration || user.membership?.fechavenc;
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const expirationKey = expiration ? String(expiration).slice(0, 10) : '';
+
+  if (paymentStatus === 'canceled') return 'Cancelada';
+  if (paymentStatus === 'expired' || (expirationKey && expirationKey < todayKey)) return 'Vencida';
+  if (paymentStatus === 'pending') return 'Pendiente';
+  if (paymentStatus === 'denied') return 'Denegada';
+  if (String(user.role || '').toLowerCase() === 'admin') return 'Permanente';
+  if (['basic', 'basico', 'básico', 'premium'].includes(membershipName)) return 'Activa';
+  return 'Sin membresía';
+}
+
+function getMembershipStatusClass(status) {
+  if (status === 'Activa' || status === 'Permanente') return 'bg-emerald-100 text-emerald-700';
+  if (status === 'Vencida' || status === 'Cancelada' || status === 'Denegada') return 'bg-red-100 text-red-700';
+  if (status === 'Pendiente') return 'bg-amber-100 text-amber-700';
+  return 'bg-slate-100 text-slate-600';
+}
+
 function getMembershipClass(name) {
   const normalized = String(name || '').toUpperCase();
 
@@ -286,15 +310,16 @@ export default function UserManagementView({ user }) {
   });
 
   const exportUsers = (format) => {
-    const headers = ['Usuario', 'Nombre', 'Correo', 'Rol', 'Membresia', 'Estado de pago', 'Vencimiento'];
+    const headers = ['Usuario', 'Nombre', 'Correo', 'Rol', 'Membresia', 'Fecha de inicio', 'Vencimiento', 'Estado'];
     const rows = filteredUsers.map((adminUser) => [
       adminUser.nombreuser,
       [adminUser.nombre, adminUser.apellido].filter(Boolean).join(' '),
       adminUser.correo || '',
       adminUser.role || 'user',
       adminUser.membership?.nombre || 'free',
-      adminUser.payment_status || 'approved',
+      formatDate(adminUser.membership_started_at),
       formatDate(adminUser.membership_expiration || adminUser.membership?.fechavenc),
+      getMembershipStatus(adminUser),
     ]);
     const escapeCell = (value) => `"${String(value ?? '').replaceAll('"', '""')}"`;
     const csv = [headers, ...rows].map((row) => row.map(escapeCell).join(',')).join('\r\n');
@@ -310,10 +335,10 @@ export default function UserManagementView({ user }) {
   };
 
   const printUsers = () => {
-    const rows = filteredUsers.map((adminUser) => `<tr><td>${adminUser.nombreuser}</td><td>${[adminUser.nombre, adminUser.apellido].filter(Boolean).join(' ')}</td><td>${adminUser.correo || ''}</td><td>${adminUser.membership?.nombre || 'free'}</td><td>${adminUser.payment_status || 'approved'}</td></tr>`).join('');
+    const rows = filteredUsers.map((adminUser) => `<tr><td>${adminUser.nombreuser}</td><td>${[adminUser.nombre, adminUser.apellido].filter(Boolean).join(' ')}</td><td>${adminUser.correo || ''}</td><td>${adminUser.membership?.nombre || 'free'}</td><td>${formatDate(adminUser.membership_started_at)}</td><td>${formatDate(adminUser.membership_expiration || adminUser.membership?.fechavenc)}</td><td>${getMembershipStatus(adminUser)}</td></tr>`).join('');
     const printWindow = window.open('', '_blank', 'width=1000,height=700');
     if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>Usuarios RIQSSI</title><style>body{font-family:Arial;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#e2e8f0}</style></head><body><h1>Usuarios RIQSSI</h1><table><thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Membresia</th><th>Pago</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+    printWindow.document.write(`<html><head><title>Usuarios RIQSSI</title><style>body{font-family:Arial;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#e2e8f0}</style></head><body><h1>Usuarios RIQSSI</h1><table><thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Membresia</th><th>Fecha de inicio</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
@@ -433,12 +458,12 @@ export default function UserManagementView({ user }) {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500 font-bold border-b border-slate-200">
-                <th className="px-6 py-4">Usuario</th>
-                <th className="px-6 py-4">Correo Electrónico</th>
-                <th className="px-6 py-4">Rol</th>
-                <th className="px-6 py-4">Membresía</th>
-                <th className="px-6 py-4">Vencimiento</th>
-                <th className="px-6 py-4">Cantidad de Verificaciones</th>
+                <th className="px-6 py-4">Nombre</th>
+                <th className="px-6 py-4">Correo</th>
+                <th className="px-6 py-4">Plan actual</th>
+                <th className="px-6 py-4">Fecha de inicio</th>
+                <th className="px-6 py-4">Fecha de vencimiento</th>
+                <th className="px-6 py-4">Estado</th>
                 <th className="px-6 py-4">Acciones</th>
               </tr>
             </thead>
@@ -453,8 +478,8 @@ export default function UserManagementView({ user }) {
                 filteredUsers.map((user) => {
                   const fullName = [user.nombre, user.apellido].filter(Boolean).join(' ') || user.nombreuser;
                   const membershipName = user.membership?.nombre || 'Sin membresía';
-                  const roleName = String(user.role || 'user').toUpperCase();
-                    const paymentStatus = String(user.payment_status || 'approved').toLowerCase();
+                  const membershipStatus = getMembershipStatus(user);
+                  const paymentStatus = String(user.payment_status || 'approved').toLowerCase();
                   const initials = String(fullName || user.nombreuser || 'RI').trim().slice(0, 2).toUpperCase();
 
                   return (
@@ -467,29 +492,24 @@ export default function UserManagementView({ user }) {
                       </td>
                       <td className="px-6 py-4 text-slate-600">{user.correo || 'Sin correo'}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 text-[10px] font-bold rounded ${roleName === 'ADMIN' ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-700'}`}>
-                          {roleName}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-[10px] font-bold rounded ${getMembershipClass(membershipName)}`}>
                           {membershipName}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={user.membership?.fechavenc ? 'text-slate-600' : 'text-slate-400'}>
-                          {formatDate(user.membership?.fechavenc)}
+                        <span className={user.membership_started_at ? 'text-slate-600' : 'text-slate-400'}>
+                          {formatDate(user.membership_started_at)}
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <button
-                          className="min-w-10 rounded-md border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-bold text-blue-700 hover:bg-blue-100 transition-colors"
-                          onClick={() => setVerificationsUser({ name: fullName, verifications: user.verifications })}
-                          title="Ver proporción Fake / Verdadero"
-                          type="button"
-                        >
-                          {Number(user.verifications?.total || 0)}
-                        </button>
+                        <span className={user.membership?.fechavenc ? 'text-slate-600' : 'text-slate-400'}>
+                          {formatDate(user.membership_expiration || user.membership?.fechavenc)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold uppercase ${getMembershipStatusClass(membershipStatus)}`}>
+                          {membershipStatus}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex flex-wrap gap-2">
@@ -499,7 +519,7 @@ export default function UserManagementView({ user }) {
                             type="button"
                           >
                             <Pencil className="h-3.5 w-3.5" />
-                            Editar
+                            Cambiar plan
                           </button>
                           {paymentStatus === 'pending' ? (
                             <>
