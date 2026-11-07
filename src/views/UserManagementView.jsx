@@ -589,7 +589,7 @@ export default function UserManagementView({ user }) {
           <div className="relative z-10 w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-slate-200">
             <div className="mb-6 flex items-start justify-between gap-4">
               <div>
-                <h3 className="text-xl font-bold text-slate-900">Editar usuario</h3>
+                <h3 className="text-xl font-bold text-slate-900">Editar rol y membresía</h3>
                 <p className="text-sm text-slate-500 mt-1">
                   {editingUser.nombre || editingUser.nombreuser} · membresía y rol.
                 </p>
