@@ -33,6 +33,59 @@ function getUploadLimitMb(user) {
   return UPLOAD_LIMITS_MB[membership] || UPLOAD_LIMITS_MB.free;
 }
 
+function getEffectiveMembership(user) {
+  if (String(user?.role || '').toLowerCase() === 'admin') {
+    return 'premium';
+  }
+
+  const membership = String(user?.membership_code || user?.membership?.nombre || 'free')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+  const paymentStatus = String(user?.payment_status || 'approved').toLowerCase();
+  const expirationDate = user?.membership_expiration?.slice(0, 10);
+  const isExpired = expirationDate && expirationDate < new Date().toISOString().slice(0, 10);
+
+  if (['canceled', 'expired', 'denied'].includes(paymentStatus) || isExpired) {
+    return 'free';
+  }
+
+  if (membership === 'basico') return 'basic';
+  if (membership === 'gratis') return 'free';
+  return membership;
+}
+
+function readVideoDuration(file) {
+  return new Promise((resolve, reject) => {
+    const video = document.createElement('video');
+    const objectUrl = URL.createObjectURL(file);
+
+    const cleanup = () => {
+      video.removeAttribute('src');
+      video.load();
+      URL.revokeObjectURL(objectUrl);
+    };
+
+    video.onloadedmetadata = () => {
+      const duration = video.duration;
+      cleanup();
+      if (!Number.isFinite(duration)) {
+        reject(new Error('No se pudo leer la duración del video.'));
+        return;
+      }
+      resolve(duration);
+    };
+
+    video.onerror = () => {
+      cleanup();
+      reject(new Error('No se pudo leer la duración del video.'));
+    };
+
+    video.src = objectUrl;
+  });
+}
+
 function getAssetUrl(assetPath) {
   if (!assetPath) {
     return '';
@@ -188,6 +241,23 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
     if (!selectedFile.name.toLowerCase().endsWith('.mp4')) {
       setError('Solo se admiten archivos .mp4.');
       return;
+    }
+
+    const membership = getEffectiveMembership(user);
+    const durationLimitMinutes = Number(user?.membership?.duracionvideopermitida);
+    if (membership !== 'premium' || String(user?.role || '').toLowerCase() !== 'admin') {
+      if (Number.isFinite(durationLimitMinutes) && durationLimitMinutes > 0) {
+        try {
+          const duration = await readVideoDuration(selectedFile);
+          if (duration > durationLimitMinutes * 60) {
+            setError(`El video supera el límite de ${durationLimitMinutes} minuto(s) del plan ${membership}.`);
+            return;
+          }
+        } catch (durationError) {
+          setError(durationError.message || 'No se pudo validar la duración del video.');
+          return;
+        }
+      }
     }
 
     const uploadLimitMb = getUploadLimitMb(user);
