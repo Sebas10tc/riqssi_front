@@ -94,17 +94,33 @@ export default function RegisterView({ setView }) {
       setPaymentMessage('El código de operación y la imagen del comprobante son obligatorios.');
       return;
     }
-    const formData = new FormData();
-    formData.append('nombreuser', registration.nombreuser);
-    formData.append('operation_code', operationCode);
-    formData.append('proof', proof);
+    const requestedPlan = registration?.membership_request || registration?.plan;
+    if (!requestedPlan || requestedPlan === 'gratis' || requestedPlan === 'free') {
+      setPaymentMessage('No se encontró un plan de pago seleccionado. Vuelve al registro y selecciona Básico o Premium.');
+      return;
+    }
+
     try {
+      const selectionResponse = await fetch(`${PRIMARY_API_URL}/membership/select`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombreuser: registration.nombreuser, plan: requestedPlan }),
+      });
+      const selectionData = await selectionResponse.json().catch(() => null);
+      if (!selectionResponse.ok) {
+        throw new Error(selectionData?.detail || 'No se pudo seleccionar la membresía de pago.');
+      }
+
+      const formData = new FormData();
+      formData.append('nombreuser', registration.nombreuser);
+      formData.append('operation_code', operationCode.trim());
+      formData.append('proof', proof);
       const response = await fetch(`${PRIMARY_API_URL}/membership/payment`, { method: 'POST', body: formData });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.detail || 'No se pudo enviar el comprobante');
+      const data = await response.json().catch(() => null);
+      if (!response.ok) throw new Error(data?.detail || 'No se pudo enviar el comprobante');
       setPaymentMessage('Comprobante enviado. El administrador revisará tu pago.');
     } catch (submitError) {
-      setPaymentMessage(submitError.message);
+      setPaymentMessage(submitError.message || 'No se pudo enviar el comprobante.');
     }
   };
 
