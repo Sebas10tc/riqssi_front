@@ -192,7 +192,7 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
 
     const uploadLimitMb = getUploadLimitMb(user);
     if (selectedFile.size > uploadLimitMb * 1024 * 1024) {
-      setError(`El archivo supera el límite de ${uploadLimitMb} MB de tu plan.`);
+      setError('El video supera el tamaño máximo permitido para tu plan. Mejora tu plan para subir videos más pesados.');
       return;
     }
 
