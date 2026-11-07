@@ -67,7 +67,7 @@ export default function ReportView({ analysisResult, user }) {
   const finalVerdict = analysisResult?.finalVerdict;
   const videoResult = analysisResult?.videoAnalysis;
   const audioResult = analysisResult?.audioAnalysis;
-  const hasAudioAnalysis = Boolean(audioResult || finalVerdict?.audio);
+  const hasAudioAnalysis = Boolean(audioResult?.verdict || finalVerdict?.audio?.etiqueta);
   const audioOmitted = Boolean(analysisResult?.tracks && !analysisResult.tracks.pista_audio_hash) || Boolean(finalVerdict && !hasAudioAnalysis);
   const videoMeta = analysisResult?.download?.video;
   const thumbnailUrl = getThumbnailUrl(videoMeta?.thumbnail_url || videoMeta?.thumbnail_path);
@@ -288,9 +288,17 @@ export default function ReportView({ analysisResult, user }) {
 
       // Desglose con barras
       const breakdownItems = [
-        { label: 'Video (probabilidad de FAKE)', value: videoFakeConfidence, detail: videoResult?.verdict },
+        {
+          label: `Video - Probabilidad de FAKE: ${videoFakeConfidence}%`,
+          value: videoFakeConfidence,
+          verdict: videoResult?.verdict || finalVerdict?.video?.etiqueta,
+        },
         ...(hasAudioAnalysis
-          ? [{ label: 'Audio (probabilidad de FAKE)', value: audioConfidence, detail: audioResult?.verdict }]
+          ? [{
+              label: `Audio - Probabilidad de FAKE: ${audioConfidence}%`,
+              value: audioConfidence,
+              verdict: audioResult?.verdict || finalVerdict?.audio?.etiqueta,
+            }]
           : [{ label: 'Análisis de audio', omitted: true }]),
         { label: hasAudioAnalysis ? 'Resultado final (promedio)' : 'Resultado final (solo video)', value: verdictPercent, detail: finalVerdict?.etiqueta },
       ];
@@ -309,6 +317,10 @@ export default function ReportView({ analysisResult, user }) {
           pdf.setFont('helvetica', 'normal');
           pdf.setTextColor(100, 116, 139);
           pdf.text('OMITIDA - sin pista de audio', margin + 75, rowY);
+        } else if (item.verdict) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(100, 116, 139);
+          pdf.text(sanitizePdfText(getVerdictDisplayLabel(item.verdict)), margin + contentWidth - 5, rowY, { align: 'right' });
         } else if (item.detail) {
           pdf.setFont('helvetica', 'normal');
           pdf.setTextColor(100, 116, 139);
@@ -316,7 +328,7 @@ export default function ReportView({ analysisResult, user }) {
         }
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(15, 23, 42);
-        if (!item.omitted) {
+        if (!item.omitted && !item.verdict) {
           pdf.text(`${value}%`, margin + contentWidth - 5, rowY, { align: 'right' });
         }
         if (!item.omitted) {
@@ -608,20 +620,22 @@ export default function ReportView({ analysisResult, user }) {
           <div className="flex flex-col gap-2 text-slate-500">
             {[
               {
-                label: 'Video (Probabilidad de FAKE)',
+                label: `Video - Probabilidad de FAKE: ${videoFakeConfidence}%`,
                 value: videoFakeConfidence,
+                verdict: getVerdictDisplayLabel(videoResult?.verdict || finalVerdict?.video?.etiqueta),
                 color: 'bg-blue-600',
               },
               ...(hasAudioAnalysis ? [{
-                label: 'Audio (Probabilidad de FAKE)',
+                label: `Audio - Probabilidad de FAKE: ${audioConfidence}%`,
                 value: audioConfidence,
+                verdict: getVerdictDisplayLabel(audioResult?.verdict || finalVerdict?.audio?.etiqueta),
                 color: 'bg-blue-400',
               }] : []),
             ].map((item) => (
               <div key={item.label} className="flex flex-col justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
                 <div className="mb-2 flex justify-between gap-3 text-xs uppercase font-semibold">
                   <span>{item.label}</span>
-                  <span className="text-slate-900 font-bold">{item.value}%</span>
+                  <span className="text-slate-900 font-bold">{item.verdict || 'Sin dato'}</span>
                 </div>
                 <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                   <div className={`${item.color} h-full transition-all duration-1000`} style={{ width: `${item.value}%` }}></div>
