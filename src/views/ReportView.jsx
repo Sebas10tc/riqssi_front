@@ -67,6 +67,8 @@ export default function ReportView({ analysisResult, user }) {
   const finalVerdict = analysisResult?.finalVerdict;
   const videoResult = analysisResult?.videoAnalysis;
   const audioResult = analysisResult?.audioAnalysis;
+  const hasAudioAnalysis = Boolean(audioResult || finalVerdict?.audio);
+  const audioOmitted = Boolean(analysisResult?.tracks && !analysisResult.tracks.pista_audio_hash) || Boolean(finalVerdict && !hasAudioAnalysis);
   const videoMeta = analysisResult?.download?.video;
   const thumbnailUrl = getThumbnailUrl(videoMeta?.thumbnail_url || videoMeta?.thumbnail_path);
   const verdictRaw = finalVerdict?.etiqueta || audioResult?.verdict || videoResult?.verdict || 'SIN DATOS';
@@ -95,8 +97,12 @@ export default function ReportView({ analysisResult, user }) {
     : String(audioResult?.verdict || '').toUpperCase() === 'REAL'
       ? 100 - audioWinningConfidence
       : audioWinningConfidence;
-  const dominantSignal = videoFakeConfidence >= audioConfidence ? 'Video' : 'Audio';
+  const dominantSignal = !hasAudioAnalysis || videoFakeConfidence >= audioConfidence ? 'Video' : 'Audio';
   const riskLevel = verdictPercent >= 80 ? 'Muy alto' : verdictPercent >= 60 ? 'Alto' : verdictPercent >= 40 ? 'Moderado' : 'Bajo';
+  const verdictBasis = hasAudioAnalysis ? 'audio y video' : 'solo video';
+  const verdictMethod = hasAudioAnalysis
+    ? 'El resultado final se obtiene promediando la probabilidad de FAKE del video y del audio.'
+    : 'El resultado final se calcula únicamente con la probabilidad de FAKE del video; no se detectó una pista de audio y, por tanto, el audio fue omitido.';
 
   const formatValue = (value, fallback = 'Sin dato') => (value !== null && value !== undefined && value !== '' ? value : fallback);
 
@@ -276,15 +282,17 @@ export default function ReportView({ analysisResult, user }) {
       startSection('Resumen principal', 20);
       drawParagraph(
         finalVerdict
-          ? `El análisis combinado de audio y video concluye ${getVerdictDisplayLabel(finalVerdict.etiqueta)} con una probabilidad de contenido falso de ${verdictPercent || 0}%. Nivel de riesgo: ${riskLevel}. Señal dominante: ${dominantSignal}.`
+          ? `El análisis de ${verdictBasis} concluye ${getVerdictDisplayLabel(finalVerdict.etiqueta)} con una probabilidad de contenido falso de ${verdictPercent || 0}%. Nivel de riesgo: ${riskLevel}. Señal dominante: ${dominantSignal}.`
           : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.'
       );
 
       // Desglose con barras
       const breakdownItems = [
         { label: 'Video (probabilidad de FAKE)', value: videoFakeConfidence, detail: videoResult?.verdict },
-        { label: 'Audio (probabilidad de FAKE)', value: audioConfidence, detail: audioResult?.verdict },
-        { label: 'Resultado final (promedio)', value: verdictPercent, detail: finalVerdict?.etiqueta },
+        ...(hasAudioAnalysis
+          ? [{ label: 'Audio (probabilidad de FAKE)', value: audioConfidence, detail: audioResult?.verdict }]
+          : [{ label: 'Análisis de audio', omitted: true }]),
+        { label: hasAudioAnalysis ? 'Resultado final (promedio)' : 'Resultado final (solo video)', value: verdictPercent, detail: finalVerdict?.etiqueta },
       ];
       const rowHeight = 16;
       startSection('Desglose de detección', breakdownItems.length * rowHeight + 6);
@@ -297,17 +305,25 @@ export default function ReportView({ analysisResult, user }) {
         pdf.setFontSize(9);
         pdf.setTextColor(51, 65, 85);
         pdf.text(item.label, margin + 5, rowY);
-        if (item.detail) {
+        if (item.omitted) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setTextColor(100, 116, 139);
+          pdf.text('OMITIDA - sin pista de audio', margin + 75, rowY);
+        } else if (item.detail) {
           pdf.setFont('helvetica', 'normal');
           pdf.setTextColor(100, 116, 139);
           pdf.text(sanitizePdfText(getVerdictDisplayLabel(item.detail)), margin + 75, rowY);
         }
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(15, 23, 42);
-        pdf.text(`${value}%`, margin + contentWidth - 5, rowY, { align: 'right' });
-        pdf.setFillColor(226, 232, 240);
-        pdf.roundedRect(margin + 5, rowY + 2.5, barWidth, 3, 1.5, 1.5, 'F');
-        if (value > 0) {
+        if (!item.omitted) {
+          pdf.text(`${value}%`, margin + contentWidth - 5, rowY, { align: 'right' });
+        }
+        if (!item.omitted) {
+          pdf.setFillColor(226, 232, 240);
+          pdf.roundedRect(margin + 5, rowY + 2.5, barWidth, 3, 1.5, 1.5, 'F');
+        }
+        if (!item.omitted && value > 0) {
           pdf.setFillColor(...(value >= 50 ? [220, 38, 38] : [5, 150, 90]));
           pdf.roundedRect(margin + 5, rowY + 2.5, Math.max(3, (barWidth * value) / 100), 3, 1.5, 1.5, 'F');
         }
@@ -345,7 +361,7 @@ export default function ReportView({ analysisResult, user }) {
       startSection('Interpretación y recomendación', 30);
       drawParagraph(
         finalVerdict
-          ? `El resultado final se obtiene promediando la probabilidad de FAKE del video y del audio; un porcentaje mayor indica mayor probabilidad de contenido falso. Se recomienda contrastar este resultado con los metadatos y el material original antes de tomar decisiones. Este informe es un apoyo técnico y no reemplaza un peritaje oficial.`
+          ? `${verdictMethod} Un porcentaje mayor indica mayor probabilidad de contenido falso. Se recomienda contrastar este resultado con los metadatos y el material original antes de tomar decisiones. Este informe es un apoyo técnico y no reemplaza un peritaje oficial.`
           : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.'
       );
 
@@ -515,7 +531,7 @@ export default function ReportView({ analysisResult, user }) {
           </p>
           {finalVerdict ? (
             <p className="mt-3 max-w-md text-sm leading-relaxed text-slate-500">
-              El resultado final se obtiene promediando la probabilidad de FAKE del video y la probabilidad de FAKE del audio. Un porcentaje mayor indica mayor probabilidad de contenido falso.
+              {verdictMethod} Un porcentaje mayor indica mayor probabilidad de contenido falso.
             </p>
           ) : null}
 
@@ -572,7 +588,7 @@ export default function ReportView({ analysisResult, user }) {
               </div>
               <p className="text-sm text-slate-600 leading-relaxed">
                 {finalVerdict
-                  ? `El análisis combinado de audio y video concluye ${finalVerdict.etiqueta}.`
+                  ? `El análisis de ${verdictBasis} concluye ${finalVerdict.etiqueta}${audioOmitted ? '. La fase de audio fue omitida porque el video no tiene pista de audio.' : '.'}`
                   : 'El análisis forense se mostrará aquí una vez termine el procesamiento completo.'}
               </p>
             </div>
@@ -596,11 +612,11 @@ export default function ReportView({ analysisResult, user }) {
                 value: videoFakeConfidence,
                 color: 'bg-blue-600',
               },
-              {
+              ...(hasAudioAnalysis ? [{
                 label: 'Audio (Probabilidad de FAKE)',
                 value: audioConfidence,
                 color: 'bg-blue-400',
-              },
+              }] : []),
             ].map((item) => (
               <div key={item.label} className="flex flex-col justify-between rounded-lg border border-slate-100 bg-slate-50 p-3">
                 <div className="mb-2 flex justify-between gap-3 text-xs uppercase font-semibold">
@@ -612,6 +628,11 @@ export default function ReportView({ analysisResult, user }) {
                 </div>
               </div>
             ))}
+            {audioOmitted ? (
+              <div className="rounded-lg border border-slate-100 bg-slate-50 p-3 text-xs font-semibold uppercase text-slate-500">
+                Análisis de audio: OMITIDA (sin pista de audio)
+              </div>
+            ) : null}
           </div>
         </section>
 

@@ -182,11 +182,12 @@ export default function AnalysisView({
   }, [analysisStatus, setView]);
 
   const isCompleted = analysisStatus === 'completed';
+  const hasAudioTrack = Boolean(readyRequest?.tracks?.pista_audio_hash);
 
   const clampProgress = (value) => Math.max(0, Math.min(100, Math.round(value)));
   const featureProgress = clampProgress((pipelineProgress / 35) * 100);
   const biometricsProgress = clampProgress(((pipelineProgress - 20) / 40) * 100);
-  const audioProgress = clampProgress(((pipelineProgress - 60) / 30) * 100);
+  const audioProgress = hasAudioTrack ? clampProgress(((pipelineProgress - 60) / 30) * 100) : 0;
 
   const stageLabelByStep = {
     init: 'INICIANDO ANÁLISIS',
@@ -315,9 +316,9 @@ export default function AnalysisView({
           <StatusCard
             icon={<Music className="h-5 w-5" />}
             title="Verificación de Espectro de Audio"
-            progress={isCompleted ? 100 : audioProgress}
-            status={isCompleted ? 'COMPLETO' : audioProgress > 0 ? `${audioProgress}%` : 'PENDIENTE'}
-            inactive={audioProgress === 0 && !isCompleted}
+            progress={!hasAudioTrack ? 0 : isCompleted ? 100 : audioProgress}
+            status={!hasAudioTrack ? 'OMITIDA' : isCompleted ? 'COMPLETO' : audioProgress > 0 ? `${audioProgress}%` : 'PENDIENTE'}
+            inactive={!hasAudioTrack || (audioProgress === 0 && !isCompleted)}
           />
         </div>
 
