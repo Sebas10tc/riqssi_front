@@ -17,6 +17,7 @@ export default function RegisterView({ setView }) {
   const [password, setPassword] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [plan, setPlan] = useState('gratis');
+  const [acceptedPolicies, setAcceptedPolicies] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,10 @@ export default function RegisterView({ setView }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    if (!acceptedPolicies) {
+      setError('Debes aceptar los Términos de servicio y la Política de privacidad para crear una cuenta.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -281,6 +286,17 @@ export default function RegisterView({ setView }) {
               })}
             </div>
           </div>
+
+          <label className="flex items-start gap-3 text-sm text-slate-600">
+            <input
+              className="mt-1 h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-600"
+              type="checkbox"
+              checked={acceptedPolicies}
+              onChange={(event) => setAcceptedPolicies(event.target.checked)}
+              required
+            />
+            <span>Estoy de acuerdo con los Términos de servicio y la Política de privacidad.</span>
+          </label>
 
           <button
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition duration-200 shadow-lg shadow-blue-600/20 active:scale-[0.99]"
