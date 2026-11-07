@@ -78,6 +78,8 @@ export default function LoginView({ onLogin, setView }) {
       }
     } catch (err) {
       setError(err.message || 'Error inesperado al iniciar sesión');
+      setPassword('');
+      setShowPassword(false);
     } finally {
       setLoading(false);
     }
