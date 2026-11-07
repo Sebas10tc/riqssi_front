@@ -292,7 +292,7 @@ export default function AnalysisView({
 
       <aside className="lg:w-1/3 space-y-8">
         <div className="space-y-4">
-          <h1 className="text-6xl font-bold tracking-tight text-slate-900" style={{ color: '#2563eb' }}>Analizando<br />Video...</h1>
+          <h1 className="text-6xl font-bold tracking-tight text-slate-900" style={{ color: '#2563eb' }}>Análisis en curso</h1>
           <p className="text-slate-500 text-lg leading-relaxed">
             Desglosando capas de video y audio para detectar patrones de IA y anomalías sintéticas.
           </p>
