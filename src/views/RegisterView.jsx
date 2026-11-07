@@ -95,24 +95,15 @@ export default function RegisterView({ setView }) {
       return;
     }
     const requestedPlan = registration?.membership_request || registration?.plan;
-    if (!requestedPlan || requestedPlan === 'gratis' || requestedPlan === 'free') {
+    if (!requestedPlan || ['gratis', 'free'].includes(String(requestedPlan).toLowerCase())) {
       setPaymentMessage('No se encontró un plan de pago seleccionado. Vuelve al registro y selecciona Básico o Premium.');
       return;
     }
 
     try {
-      const selectionResponse = await fetch(`${PRIMARY_API_URL}/membership/select`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombreuser: registration.nombreuser, plan: requestedPlan }),
-      });
-      const selectionData = await selectionResponse.json().catch(() => null);
-      if (!selectionResponse.ok) {
-        throw new Error(selectionData?.detail || 'No se pudo seleccionar la membresía de pago.');
-      }
-
       const formData = new FormData();
       formData.append('nombreuser', registration.nombreuser);
+      formData.append('plan', requestedPlan);
       formData.append('operation_code', operationCode.trim());
       formData.append('proof', proof);
       const response = await fetch(`${PRIMARY_API_URL}/membership/payment`, { method: 'POST', body: formData });
