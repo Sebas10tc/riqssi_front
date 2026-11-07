@@ -26,8 +26,9 @@ export default function LoginView({ onLogin, setView }) {
       let data = null;
 
       for (const apiUrl of API_URLS) {
+        let response;
         try {
-          const response = await fetch(`${apiUrl}/login`, {
+          response = await fetch(`${apiUrl}/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -37,22 +38,23 @@ export default function LoginView({ onLogin, setView }) {
               clave: password,
             }),
           });
-
-          data = await response.json();
-
-          if (!response.ok) {
-            throw new Error(data.detail || 'No se pudo iniciar sesión');
-          }
-
-          break;
         } catch (error) {
           lastError = error;
-          data = null;
+          continue;
         }
+
+        data = await response.json().catch(() => null);
+        if (!response.ok) {
+          throw new Error(data?.detail || 'No se pudo iniciar sesión');
+        }
+        break;
       }
 
       if (!data) {
         throw new Error(lastError?.message || 'No se pudo iniciar sesión');
+      }
+      if (data.authenticated === false || !data.access_token || !data.user) {
+        throw new Error(data.detail || 'No se pudo iniciar sesión');
       }
 
       const loggedName = data.user?.nombre || correo.split('@')[0];
