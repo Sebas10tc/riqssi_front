@@ -651,7 +651,6 @@ export default function UserManagementView({ user }) {
                 <option
                   key={membership.idmembresia}
                   value={membership.idmembresia}
-                  disabled={String(membership.nombre || '').trim().toLowerCase() !== 'gratis'}
                 >
                   {membership.nombre}
                 </option>
