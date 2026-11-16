@@ -68,6 +68,10 @@ function formatDateTime(value) {
   return parsed.toLocaleString();
 }
 
+function getRoleLabel(role) {
+  return String(role || '').toLowerCase() === 'admin' ? 'Administrador' : 'Cliente';
+}
+
 function getMembershipStatus(user) {
   const paymentStatus = String(user.payment_status || 'approved').toLowerCase();
   const membershipName = String(user.membership?.nombre || user.membership_code || 'free').toLowerCase();
@@ -315,7 +319,7 @@ export default function UserManagementView({ user }) {
       adminUser.nombreuser,
       [adminUser.nombre, adminUser.apellido].filter(Boolean).join(' '),
       adminUser.correo || '',
-      adminUser.role || 'user',
+      getRoleLabel(adminUser.role),
       adminUser.membership?.nombre || 'free',
       formatDate(adminUser.membership_started_at),
       formatDate(adminUser.membership_expiration || adminUser.membership?.fechavenc),
@@ -335,10 +339,10 @@ export default function UserManagementView({ user }) {
   };
 
   const printUsers = () => {
-    const rows = filteredUsers.map((adminUser) => `<tr><td>${adminUser.nombreuser}</td><td>${[adminUser.nombre, adminUser.apellido].filter(Boolean).join(' ')}</td><td>${adminUser.correo || ''}</td><td>${adminUser.membership?.nombre || 'free'}</td><td>${formatDate(adminUser.membership_started_at)}</td><td>${formatDate(adminUser.membership_expiration || adminUser.membership?.fechavenc)}</td><td>${getMembershipStatus(adminUser)}</td></tr>`).join('');
+    const rows = filteredUsers.map((adminUser) => `<tr><td>${adminUser.nombreuser}</td><td>${[adminUser.nombre, adminUser.apellido].filter(Boolean).join(' ')}</td><td>${adminUser.correo || ''}</td><td>${getRoleLabel(adminUser.role)}</td><td>${adminUser.membership?.nombre || 'free'}</td><td>${formatDate(adminUser.membership_started_at)}</td><td>${formatDate(adminUser.membership_expiration || adminUser.membership?.fechavenc)}</td><td>${getMembershipStatus(adminUser)}</td></tr>`).join('');
     const printWindow = window.open('', '_blank', 'width=1000,height=700');
     if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>Usuarios RIQSSI</title><style>body{font-family:Arial;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#e2e8f0}</style></head><body><h1>Usuarios RIQSSI</h1><table><thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Membresia</th><th>Fecha de inicio</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
+    printWindow.document.write(`<html><head><title>Usuarios RIQSSI</title><style>body{font-family:Arial;padding:24px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:8px;text-align:left}th{background:#e2e8f0}</style></head><body><h1>Usuarios RIQSSI</h1><table><thead><tr><th>Usuario</th><th>Nombre</th><th>Correo</th><th>Rol</th><th>Membresia</th><th>Fecha de inicio</th><th>Vencimiento</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);
     printWindow.document.close();
     printWindow.focus();
     printWindow.print();
@@ -460,6 +464,7 @@ export default function UserManagementView({ user }) {
               <tr className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-500 font-bold border-b border-slate-200">
                 <th className="px-6 py-4">Nombre</th>
                 <th className="px-6 py-4">Correo</th>
+                <th className="px-6 py-4">Rol</th>
                 <th className="px-6 py-4">Plan actual</th>
                 <th className="px-6 py-4">Fecha de inicio</th>
                 <th className="px-6 py-4">Fecha de vencimiento</th>
@@ -470,7 +475,7 @@ export default function UserManagementView({ user }) {
             <tbody className="divide-y divide-slate-100 text-sm">
               {loadingData && adminData.users.length === 0 ? (
                 <tr>
-                  <td className="px-6 py-10 text-center text-slate-500" colSpan={7}>
+                  <td className="px-6 py-10 text-center text-slate-500" colSpan={8}>
                     Cargando usuarios...
                   </td>
                 </tr>
@@ -491,6 +496,11 @@ export default function UserManagementView({ user }) {
                         <span className="font-medium text-slate-900">{fullName}</span>
                       </td>
                       <td className="px-6 py-4 text-slate-600">{user.correo || 'Sin correo'}</td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex rounded-full px-3 py-1 text-[10px] font-bold ${String(user.role || '').toLowerCase() === 'admin' ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-700'}`}>
+                          {getRoleLabel(user.role)}
+                        </span>
+                      </td>
                       <td className="px-6 py-4">
                         <span className={`px-2 py-1 text-[10px] font-bold rounded ${getMembershipClass(membershipName)}`}>
                           {membershipName}
@@ -544,7 +554,7 @@ export default function UserManagementView({ user }) {
                 })
               ) : (
                 <tr>
-                  <td className="px-6 py-10 text-center text-slate-500" colSpan={7}>
+                  <td className="px-6 py-10 text-center text-slate-500" colSpan={8}>
                     No hay usuarios para mostrar.
                   </td>
                 </tr>
