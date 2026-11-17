@@ -21,13 +21,18 @@ function formatMembershipName(value) {
   return 'Gratis';
 }
  
+function normalizePaymentStatus(value) {
+  const normalized = String(value || 'approved').trim().toLowerCase();
+  return normalized === 'rejected' ? 'denied' : normalized;
+}
+
 export default function ProfileView({ onLogout, onAccountDeleted, user }) {
   const [fullName] = useState(user?.name || 'Seba');
   const [email] = useState(user?.email || 'seba@riqssi.forensic');
   const [roleName] = useState(String(user?.role || 'USER').toUpperCase());
   const isAdmin = roleName === 'ADMIN';
   const [membershipName, setMembershipName] = useState(isAdmin ? 'Premium' : formatMembershipName(user?.membership?.nombre));
-  const [paymentStatus, setPaymentStatus] = useState(user?.payment_status || 'approved');
+  const [paymentStatus, setPaymentStatus] = useState(() => normalizePaymentStatus(user?.payment_status));
   const [membershipExpiration, setMembershipExpiration] = useState(user?.membership_expiration || null);
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -50,7 +55,7 @@ export default function ProfileView({ onLogout, onAccountDeleted, user }) {
         const data = await getUserProfile(username);
         if (!cancelled) {
           setMembershipName(isAdmin ? 'Premium' : formatMembershipName(data?.membership?.nombre));
-          setPaymentStatus(data?.payment_status || 'approved');
+          setPaymentStatus(normalizePaymentStatus(data?.payment_status));
           setMembershipExpiration(isAdmin ? null : data?.membership_expiration || null);
         }
       } catch {
@@ -254,7 +259,7 @@ export default function ProfileView({ onLogout, onAccountDeleted, user }) {
           <div className="mt-4 flex items-center justify-between gap-4 rounded-xl border border-slate-100 bg-slate-50/80 px-6 py-4 text-sm">
             <div>
               <span className="block text-xs font-bold uppercase tracking-widest text-slate-400">Estado del pago</span>
-              <span className="mt-1 block font-semibold text-slate-700">{paymentStatus === 'canceled' ? 'Cancelada · plan Gratis' : paymentStatus === 'expired' ? 'Expirada · plan Gratis' : paymentStatus === 'denied' ? 'Solicitud denegada · plan Gratis' : paymentStatus === 'pending' ? 'Pendiente de aprobación · plan Gratis' : 'Aprobada'}</span>
+              <span className="mt-1 block font-semibold text-slate-700">{paymentStatus === 'canceled' ? 'Cancelada · plan Gratis' : paymentStatus === 'expired' ? 'Expirada · plan Gratis' : paymentStatus === 'denied' ? 'Denegado' : paymentStatus === 'pending' ? 'Pendiente de aprobación · plan Gratis' : 'Aprobado'}</span>
             </div>
             {!isAdmin && ['Básico', 'Premium'].includes(membershipName) ? (
               <button type="button" onClick={handleCancelMembership} disabled={isCancelling} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">

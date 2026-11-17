@@ -25,8 +25,15 @@ function getUploadLimitMb(user) {
   const paymentStatus = String(user?.payment_status || 'approved').toLowerCase();
   const expirationDate = user?.membership_expiration?.slice(0, 10);
   const isExpired = expirationDate && expirationDate < new Date().toISOString().slice(0, 10);
+  const hasActivePaidMembership = ['basic', 'basico', 'premium'].includes(membership)
+    && expirationDate
+    && !isExpired;
 
-  if (['canceled', 'expired', 'denied'].includes(paymentStatus) || isExpired) {
+  if (
+    ['canceled', 'expired'].includes(paymentStatus)
+    || (['denied', 'rejected'].includes(paymentStatus) && !hasActivePaidMembership)
+    || isExpired
+  ) {
     return UPLOAD_LIMITS_MB.free;
   }
 
@@ -46,8 +53,15 @@ function getEffectiveMembership(user) {
   const paymentStatus = String(user?.payment_status || 'approved').toLowerCase();
   const expirationDate = user?.membership_expiration?.slice(0, 10);
   const isExpired = expirationDate && expirationDate < new Date().toISOString().slice(0, 10);
+  const hasActivePaidMembership = ['basic', 'basico', 'premium'].includes(membership)
+    && expirationDate
+    && !isExpired;
 
-  if (['canceled', 'expired', 'denied'].includes(paymentStatus) || isExpired) {
+  if (
+    ['canceled', 'expired'].includes(paymentStatus)
+    || (['denied', 'rejected'].includes(paymentStatus) && !hasActivePaidMembership)
+    || isExpired
+  ) {
     return 'free';
   }
 
@@ -124,6 +138,10 @@ function getAssetUrl(assetPath) {
 function getFriendlyErrorMessage(err) {
   const message = err?.message || '';
   const lowerMessage = message.toLowerCase();
+
+  if (lowerMessage.includes('[instagram:user]') && lowerMessage.includes('unable to extract data')) {
+    return 'Enlace no permitido. Solo se permiten videos en formato mp4';
+  }
 
   if (err?.status === 403 || lowerMessage.includes('autenticación requerida') || lowerMessage.includes('sign in to confirm') || lowerMessage.includes('cookies')) {
     return 'YouTube requiere cookies de sesión para este video. Exporta tu archivo cookies.txt, configúralo en el backend con YTDLP_COOKIEFILE y vuelve a intentar.';

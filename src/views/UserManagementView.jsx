@@ -83,7 +83,7 @@ function getMembershipStatus(user) {
   if (paymentStatus === 'canceled') return 'Cancelada';
   if (paymentStatus === 'expired' || (expirationKey && expirationKey < todayKey)) return 'Vencida';
   if (paymentStatus === 'pending') return 'Pendiente';
-  if (paymentStatus === 'denied') return 'Denegada';
+  if (paymentStatus === 'denied' || paymentStatus === 'rejected') return 'Denegada';
   if (String(user.role || '').toLowerCase() === 'admin') return 'Permanente';
   if (['basic', 'basico', 'básico', 'premium'].includes(membershipName)) return 'Activa';
   return 'Sin membresía';
@@ -309,7 +309,9 @@ export default function UserManagementView({ user }) {
       .some((value) => String(value).toLowerCase().includes(search));
     const membershipCode = String(adminUser.membership?.nombre || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const matchesMembership = membershipFilter === 'all' || membershipCode === membershipFilter;
-    const matchesPayment = paymentFilter === 'all' || String(adminUser.payment_status || 'approved').toLowerCase() === paymentFilter;
+    const rawPaymentStatus = String(adminUser.payment_status || 'approved').toLowerCase();
+    const paymentStatus = rawPaymentStatus === 'rejected' ? 'denied' : rawPaymentStatus;
+    const matchesPayment = paymentFilter === 'all' || paymentStatus === paymentFilter;
     return matchesSearch && matchesMembership && matchesPayment;
   });
 
