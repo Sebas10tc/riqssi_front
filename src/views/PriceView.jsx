@@ -1,4 +1,5 @@
 ﻿import { useState } from "react";
+import { createPortal } from 'react-dom';
 
 import YapeQrImage from '../components/YapeQrImage';
 
@@ -146,7 +147,9 @@ export default function RiqssiPricing({ user }) {
   const [operationCode, setOperationCode] = useState('');
   const [proof, setProof] = useState(null);
   const [message, setMessage] = useState('');
+  const [paymentConfirmation, setPaymentConfirmation] = useState(false);
   const handleSelect = (planId) => {
+    setPaymentConfirmation(false);
     if (!user?.nombreuser) {
       setMessage('Inicia sesión para seleccionar una membresía.');
       return;
@@ -162,6 +165,8 @@ export default function RiqssiPricing({ user }) {
 
   const submitPayment = async (event) => {
     event.preventDefault();
+    setPaymentConfirmation(false);
+    setMessage('');
     if (!operationCode.trim() || !proof) {
       setMessage('El código de operación y la imagen del comprobante son obligatorios.');
       return;
@@ -187,7 +192,7 @@ export default function RiqssiPricing({ user }) {
         setMessage(data?.detail || 'No se pudo enviar el comprobante.');
         return;
       }
-      setMessage('Comprobante enviado. Está pendiente de aprobación.');
+      setPaymentConfirmation(true);
       setSelectedPlan(null);
       setOperationCode('');
       setProof(null);
@@ -212,7 +217,7 @@ export default function RiqssiPricing({ user }) {
             críticas.
           </p>
         </div>
-        {message ? <p className="mb-6 text-center text-sm font-semibold text-slate-600">{message}</p> : null}
+        {message ? <p role="status" aria-live="polite" className="relative z-20 mb-6 text-center text-sm font-semibold text-slate-600">{message}</p> : null}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-20 items-stretch" style={{ color: '#2563eb' }}>
           {PLANS.map((plan) => (
@@ -240,6 +245,14 @@ export default function RiqssiPricing({ user }) {
         </div>
       ) : null}
 
+      {paymentConfirmation
+        ? createPortal(
+            <div className="fixed left-1/2 top-20 z-[100] w-[calc(100%-2rem)] max-w-xl -translate-x-1/2 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-4 text-center text-sm font-semibold text-emerald-800 shadow-lg" role="status" aria-live="polite">
+              Comprobante enviado. Está pendiente de aprobación.
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
