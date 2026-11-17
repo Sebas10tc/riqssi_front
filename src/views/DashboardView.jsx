@@ -56,6 +56,19 @@ function getEffectiveMembership(user) {
   return membership;
 }
 
+function getMembershipDisplayName(plan) {
+  const normalizedPlan = String(plan || 'free').trim().toLowerCase();
+  const labels = {
+    free: 'Gratis',
+    gratis: 'Gratis',
+    basic: 'Básico',
+    basico: 'Básico',
+    premium: 'Premium',
+  };
+
+  return labels[normalizedPlan] || 'Gratis';
+}
+
 function readVideoDuration(file) {
   return new Promise((resolve, reject) => {
     const video = document.createElement('video');
@@ -250,7 +263,7 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
         try {
           const duration = await readVideoDuration(selectedFile);
           if (duration > durationLimitMinutes * 60) {
-            setError(`El video supera el límite de ${durationLimitMinutes} minuto(s) del plan ${membership}.`);
+            setError(`El video supera el límite de ${durationLimitMinutes} minuto(s) del plan ${getMembershipDisplayName(membership)}.`);
             return;
           }
         } catch (durationError) {
