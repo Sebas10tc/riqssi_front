@@ -256,6 +256,12 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
       return;
     }
 
+    const uploadLimitMb = getUploadLimitMb(user);
+    if (selectedFile.size > uploadLimitMb * 1024 * 1024) {
+      setError('El video supera el tamaño máximo permitido para tu plan. Mejora tu plan para subir videos más pesados.');
+      return;
+    }
+
     const membership = getEffectiveMembership(user);
     const durationLimitMinutes = Number(user?.membership?.duracionvideopermitida);
     if (membership !== 'premium' || String(user?.role || '').toLowerCase() !== 'admin') {
@@ -271,12 +277,6 @@ export default function DashboardView({ setView, user, onStartAnalysis, onOpenRe
           return;
         }
       }
-    }
-
-    const uploadLimitMb = getUploadLimitMb(user);
-    if (selectedFile.size > uploadLimitMb * 1024 * 1024) {
-      setError('El video supera el tamaño máximo permitido para tu plan. Mejora tu plan para subir videos más pesados.');
-      return;
     }
 
     setError('');
