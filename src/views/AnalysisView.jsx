@@ -10,6 +10,10 @@ function formatAnalysisErrorMessage(error) {
   const message = error?.message || 'No se pudo completar el análisis.';
   const lowerMessage = message.toLowerCase();
 
+  if (lowerMessage.includes('video insuficiente (mínimo 150 frames)')) {
+    return 'Video con frames insuficientes';
+  }
+
   if (lowerMessage.includes('no se pudo conectar al backend') || lowerMessage.includes('failed to fetch')) {
     return `${message}\n\nAcceder a ${API_URL}/docs para probar los endpoints.`;
   }

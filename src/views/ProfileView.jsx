@@ -258,7 +258,7 @@ export default function ProfileView({ onLogout, onAccountDeleted, user }) {
             </div>
             {!isAdmin && ['Básico', 'Premium'].includes(membershipName) ? (
               <button type="button" onClick={handleCancelMembership} disabled={isCancelling} className="rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-60">
-                {isCancelling ? 'Cancelando...' : 'Cancelar membresía'}
+                {isCancelling ? 'Cancelando...' : 'Cancelar suscripción'}
               </button>
             ) : null}
           </div>

@@ -172,7 +172,7 @@ export default function ReportView({ analysisResult, user }) {
     pdf.line(14, pageHeight - 15, pageWidth - 14, pageHeight - 15);
     pdf.setFontSize(8);
     pdf.setTextColor(100, 116, 139);
-    pdf.text(`RIQSSI - Reporte de Veracidad Técnica`, 14, pageHeight - 9);
+    pdf.text(`RIQSSI - Reporte de resultados`, 14, pageHeight - 9);
     pdf.text(`Página ${pageNumber} de ${totalPages}`, pageWidth - 14, pageHeight - 9, { align: 'right' });
   };
 
@@ -226,7 +226,7 @@ export default function ReportView({ analysisResult, user }) {
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(18);
       pdf.setTextColor(255, 255, 255);
-      pdf.text('Reporte de Veracidad Técnica', margin, 14);
+      pdf.text('Reporte de resultados', margin, 14);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(9);
       pdf.setTextColor(219, 234, 254);
@@ -468,7 +468,7 @@ export default function ReportView({ analysisResult, user }) {
       {/* Report Identification */}
       <div className="flex justify-between items-end mb-8">
         <div>
-          <h1 className="text-xl font-bold text-slate-900" style={{ color: '#2563eb' }} >Reporte de Veracidad Técnica</h1>
+          <h1 className="text-xl font-bold text-slate-900" style={{ color: '#2563eb' }} >Reporte de resultados</h1>
         </div>
         <button
           type="button"
