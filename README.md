@@ -59,9 +59,9 @@ Importa `RIQSSI_FRONT/` como proyecto y configura:
 - Build command: `npm run build`
 - Output directory: `dist`
 - `VITE_API_URL=https://<backend-render>.onrender.com`
-- `VITE_YAPE_QR_URL=https://<proyecto>.supabase.co/storage/v1/object/public/yape/qr.png`
+- `VITE_YAPE_QR_URL=https://<proyecto>.supabase.co/storage/v1/object/public/yape/qr.jpg`
 
-Para mostrar el QR, crea en Supabase Storage un bucket público llamado `yape` y sube la imagen como `qr.png`. Copia su URL pública y configúrala como `VITE_YAPE_QR_URL`.
+Para mostrar el QR, crea en Supabase Storage un bucket público llamado `yape` y sube la imagen como `qr.jpg`. Copia su URL pública y configúrala como `VITE_YAPE_QR_URL`.
 
 Después de desplegar el frontend, configura su URL exacta en `FRONTEND_URLS` del backend y vuelve a desplegar el backend.
 
